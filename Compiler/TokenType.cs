@@ -1,0 +1,18 @@
+﻿public enum TokenType
+{
+    ERROR,
+    IDENTIFIER,
+    KEYWORD,
+    SYMBOL,
+    STRING,
+    CHAR,
+    INT,
+    FLOAT,
+    PARETHESES,
+    ARITHMETIC_OPERATOR,
+    ASSIGNMENT_OPERATOR,
+    LOGIC_OPERATOR,
+    COMPARISING_OPERATOR,
+    PUNCTUATION,   
+    END_OF_FILE
+}
