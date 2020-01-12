@@ -4,12 +4,12 @@ using System.Text;
 
 namespace Compiler
 {
-    class Parser
+    class AParser
     {
         int col = -1;
         string currentLine = "45+(10*2)+25/5";
 
-        public Parser()
+        public AParser()
         {
             Console.WriteLine(Formula());
         }

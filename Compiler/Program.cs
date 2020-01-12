@@ -23,7 +23,7 @@ namespace Compiler
                 Console.WriteLine(res);
             }
 
-            //Parser parser = new Parser();
+            //AParser aparser = new AParser();
         }
     }
 }
