@@ -9,6 +9,7 @@ namespace Compiler
 {    
     class Lexer
     {
+        Token oldToken;
         Dictionary dictionary;
         int col = -1;
         int row;
@@ -43,6 +44,12 @@ namespace Compiler
 
         public Token getNext()
         {
+            if (oldToken != null)
+            {
+                Token to = oldToken;
+                oldToken = null;
+                return to;
+            } 
             ch = getChar();
             TokenType t;
             while ((ch == ' ') || ch == '\t')
@@ -151,6 +158,12 @@ namespace Compiler
             }
         }
 
+        public void PutBack(Token token)
+        {
+            if (oldToken != null) throw new NotImplementedException();
+            oldToken = token;
+        }
 
+        
     }
 }

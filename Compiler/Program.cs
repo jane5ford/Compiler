@@ -12,9 +12,9 @@ namespace Compiler
         
         static void Main(string[] args)
         {
-            StreamReader code = File.OpenText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"tests\08.txt"));
+            StreamReader code = File.OpenText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"tests\01.txt"));
             Lexer lexer = new Lexer(code);
-            Console.WriteLine("row \t col \t type \t value \t");
+            /*Console.WriteLine("row \t col \t type \t value \t");
             while (true)
             {
                 Token token = lexer.getNext();
@@ -22,8 +22,13 @@ namespace Compiler
                 string res = token.row + "\t" + token.col.ToString() + "\t" + token.type.ToString() + "\t" + token.value.PadLeft(10) + "\t";
                 Console.WriteLine(res);
             }
-
-            //AParser aparser = new AParser();
+            */
+            
+            Parser parser = new Parser(lexer);
+            Node node = parser.ParseExpression();
+            Console.WriteLine(node.ToString());
         }
+        
+        
     }
 }
