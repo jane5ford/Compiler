@@ -12,7 +12,7 @@ namespace Compiler
         Token oldToken;
         Dictionary dictionary;
         int col = -1;
-        int row;
+        int row = 0;
         StreamReader sr;
         string currentLine;
         char ch;
@@ -30,20 +30,22 @@ namespace Compiler
         private char getChar()
         {
             if (currentLine == null) return '\0';
+            
             if (col < currentLine.Length - 1)
             {
                 col++;
                 return currentLine[col];
             }
             currentLine = sr.ReadLine();
-            row++;
             if (currentLine == null) return '\0';
-            col = -1; 
-            return ' '; 
+            col = -1;
+            row++;
+            return ' ';
         }
 
         public Token getNext()
         {
+            TokenType t;
             if (oldToken != null)
             {
                 Token to = oldToken;
@@ -51,7 +53,6 @@ namespace Compiler
                 return to;
             } 
             ch = getChar();
-            TokenType t;
             while ((ch == ' ') || ch == '\t')
             {
                 ch = getChar();
@@ -61,19 +62,20 @@ namespace Compiler
                 return new Token(TokenType.END_OF_FILE);
             }
             int pos = col;
+            int str = row;
             string value = "";
             if (char.IsLetter(ch))
             {
                 value += ch;
-                while (char.IsLetterOrDigit(ch = getChar())) 
+                while (char.IsLetterOrDigit(ch = getChar()))
                     value += ch;
-                col--;
                 if (dictionary.keyWord.Contains(value))
                     t = TokenType.KEYWORD;
                 else t = TokenType.IDENTIFIER;
-                return new Token(pos, row, t, value);
+                if (ch != ' ' && ch != '\t') col--;
+                return new Token(pos, str, t, value);
             }
-            else if (char.IsDigit(ch))
+            if (char.IsDigit(ch))
             {
                 value += ch;
                 while (char.IsDigit(ch = getChar()))
@@ -82,9 +84,7 @@ namespace Compiler
                 {
                     value += ch;
                     while (char.IsDigit(ch = getChar()))
-                    {
                         value += ch;
-                    }
                     if (ch == 'f')
                     {
                         value += ch;
@@ -96,14 +96,55 @@ namespace Compiler
                         t = TokenType.ERROR;
                     }
                 }
-                else if (char.IsLetter(ch)) 
+                else if (ch == 'f')
+                {
+                    value += ch;
+                    t = TokenType.FLOAT;
+                }
+                else if (char.IsLetter(ch))
                 {
                     value += ch;
                     ch = getChar();
-                    t = TokenType.ERROR; 
+                    t = TokenType.ERROR;
                 }
-                else t = TokenType.INT;
-                return new Token(pos, row, t, value);
+                else
+                {
+                    t = TokenType.INT;
+                    if (ch != ' ' && ch !='\t') col--;
+                    //Console.WriteLine(col);
+                }
+                return new Token(pos, str, t, value);
+            }
+            if (ch == '"')
+            {
+                value += ch;
+                while ((ch = getChar()) != '"')
+                {
+                    value += ch;
+                }
+                if (ch == '"')
+                {
+                    value += ch;
+                    t = TokenType.STRING;
+                }
+                else
+                {
+                    if (ch != ' ' && ch != '\t') col--;
+                    t = TokenType.ERROR;
+                }
+                return new Token(pos, str, t, value);
+            }
+            if (ch == '\'')
+            {
+                value += ch;
+                value += getChar();
+                if ((ch = getChar()) == '\'')
+                {
+                    value += ch;
+                    t = TokenType.CHAR;
+                }
+                else t = TokenType.ERROR;
+                return new Token(pos, str, t, value);
             }
             else
             {
@@ -112,31 +153,40 @@ namespace Compiler
                 else if (dictionary.punctuation.Contains(ch)) t = TokenType.PUNCTUATION;
                 else if (dictionary.arithmeticOperator.Contains(ch))
                 {
-                    if ((ch = getChar()) == '=')
+                    if (ch == '=')
                     {
-                        if (value[0] == '=') t = TokenType.COMPARISING_OPERATOR;
+                        if ((ch = getChar()) == '=')
+                        {
+                            t = TokenType.COMPARISING_OPERATOR;
+                            value += ch;
+                        }
                         else t = TokenType.ASSIGNMENT_OPERATOR;
-                        value += ch;
+                        
                     }
                     else
                     {
-                        col--;
-                        if ((ch == '+' || ch == '-' ) && value[0] == (ch = getChar()))
+                        if (ch == '+' || ch == '-' )
                         {
-                            t = TokenType.ASSIGNMENT_OPERATOR;
-                            value += ch;                            
+                            if (value[0] == (ch = getChar()))
+                            {
+                                t = TokenType.ASSIGNMENT_OPERATOR;
+                                value += ch;
+                            }
+                            else
+                            {
+                                t = TokenType.ARITHMETIC_OPERATOR;
+                                if (ch != ' ' && ch != '\t') col--;
+                            }
                         }
                         else
                         {
                             t = TokenType.ARITHMETIC_OPERATOR;
-                            if (ch == '+' || ch == '-') col--;
                         }
                     }
                 }
                 else if (ch == '<' || ch == '>' || ch == '!')
                 {
                     if ((ch = getChar()) == '=') value += ch;
-                    else col--;
                     if (value[0] == '!' && ch != '=') t = TokenType.LOGIC_OPERATOR;
                     else t = TokenType.COMPARISING_OPERATOR;
                 }
@@ -149,12 +199,12 @@ namespace Compiler
                     }
                     else
                     {
-                        col--;
+                        if (ch != ' ' && ch != '\t') col--;
                         t = TokenType.ERROR;
-                    }
+                    }                        
                 }
                 else t = TokenType.ERROR;
-                return new Token(pos, row, t, value);
+                return new Token(pos, str, t, value);
             }
         }
 

@@ -1,0 +1,2 @@
+﻿0	0	STRING	"stroka"
+1	0	CHAR	's'

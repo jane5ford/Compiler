@@ -1,0 +1,3 @@
+char ch
+string str
+bool open

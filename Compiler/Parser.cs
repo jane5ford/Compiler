@@ -53,6 +53,7 @@ namespace Compiler
             {
                 var e = ParseExpression();
                 if (lexer.getNext().value != ")") throw new Exception("error");
+                return e;
             }
             if (t.type == TokenType.IDENTIFIER)
             {

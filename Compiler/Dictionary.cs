@@ -24,7 +24,7 @@ namespace Compiler
                 "protected",            "public",               "return",              "static",
                 "string",               "switch",              "this",                 "true",
                 "using",                "void",                "while",                "write",
-                "read"
+                "read",                 "char"
             };
             arithmeticOperator = new HashSet<char>
             {
