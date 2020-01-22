@@ -24,13 +24,13 @@ namespace Compiler
                 Prefix = indent + (last ? "└─" : "├─")
             };
         }
-    
+
     }
 
     class NodeIdentifier : Node
     {
         public string name;
-        public override string ToString(string indent, bool last) => 
+        public override string ToString(string indent, bool last) =>
             GetLogDecoration(indent, true).Prefix + string.Format(" NodeIdentifier {0}\n", name);
     }
 
@@ -67,8 +67,28 @@ namespace Compiler
 
     class NodeLine : Node
     {
-        public string value;
-        public override string ToString(string indent, bool last) =>
-           GetLogDecoration(indent, true).Prefix + string.Format(" NodeLine {0}\n", value);
+        public List<NodeUnit> units;
+        private string res;
+
+        public override string ToString(string indent, bool last)
+        {
+            foreach (NodeUnit u in units)
+                res += u.value + " ";
+            return GetLogDecoration(indent, true).Prefix + string.Format(" NodeLine {0}\n", res);
+        }
     }
+
+    class NodeUnit : Node
+    {
+        public Token token { get; set; }
+        public String value;
+        public NodeUnit(Token token)
+        {
+            this.token = token;
+            value = token.value;
+        }
+        public override string ToString(string indent, bool last) =>
+           GetLogDecoration(indent, true).Prefix + string.Format(" Node {0}\n", value);
+    }
+
 }

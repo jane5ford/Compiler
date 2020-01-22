@@ -152,11 +152,23 @@ namespace Compiler
 
         public Node ParseNewLine()
         {
-            var t = lexer.GetNext();
-            if (t.value != ";") ParseNewLine(); // TODO
-            return new NodeLine { value = t.value };
+            var line = new NodeLine();
+            line.units = new List<NodeUnit>();
+            var u = ParseNewUnit();
+            while (u.value != ";")
+            {
+                line.units.Add(u);
+                u = ParseNewUnit();
+            }
+            //line.units.Add(u); //добавление в строку ";"
+            return line;
         }
 
+        public NodeUnit ParseNewUnit()
+        {
+            var t = lexer.GetNext();
+            return new NodeUnit(t);
+        }
         //public Node ParseConditional()
         //{
         //    var t = lexer.GetNext();
