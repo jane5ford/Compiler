@@ -25,5 +25,9 @@ namespace Compiler
         public Token(int col, int row) { this.col = col; this.row = row; }
         public Token(int col) { this.col = col; }
 
+        public override string ToString()
+        {
+            return row.ToString() + "\t" + col.ToString() + "\t" + type.ToString() + "\t" + value;
+        }
     }
 }

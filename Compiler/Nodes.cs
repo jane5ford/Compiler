@@ -55,9 +55,20 @@ namespace Compiler
             var res = decoration.Prefix + string.Format(" Binary {0}\n", op);
             res += left.ToString(decoration.Indent, false);
             res += right.ToString(decoration.Indent, true);
-            
             return res;
         }
     }
-    
+    class NodeBoolean : Node
+    {
+        public string value;
+        public override string ToString(string indent, bool last) =>
+           GetLogDecoration(indent, true).Prefix + string.Format(" NodeBoolean {0}\n", value);
+    }
+
+    class NodeLine : Node
+    {
+        public string value;
+        public override string ToString(string indent, bool last) =>
+           GetLogDecoration(indent, true).Prefix + string.Format(" NodeLine {0}\n", value);
+    }
 }
