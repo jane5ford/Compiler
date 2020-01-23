@@ -1,0 +1,4 @@
+if (a==b) a=a+b;
+else if (a!=b) a=a-b; a=a-b;
+else if (a!=b) { a=a-b; a=a-b;}
+else a;

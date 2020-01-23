@@ -162,7 +162,11 @@ namespace Compiler
                             t = TokenType.COMPARISING_OPERATOR;
                             value += ch;
                         }
-                        else t = TokenType.ASSIGNMENT_OPERATOR;
+                        else 
+                        {
+                            if (ch != ' ' && ch != '\t') col--;
+                            t = TokenType.ASSIGNMENT_OPERATOR; 
+                        }
                         
                     }
                     else

@@ -1,0 +1,2 @@
+if (a==b) a=a+b;
+else a = b;
