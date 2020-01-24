@@ -85,24 +85,27 @@ namespace Compiler
                 if (ch == '.')
                 {
                     value += ch;
+                    int k = 0;
                     while (char.IsDigit(ch = GetChar()))
-                        value += ch;
-                    if (ch == 'f')
-                    {
-                        value += ch;
-                        t = TokenType.FLOAT;
-                    }
-                    else
-                    {
-                        ch = GetChar();
-                        t = TokenType.ERROR;
-                    }
+                    { value += ch; k++; }
+                    //if (ch == 'f')
+                    //{
+                    //value += ch;
+                    if (ch != ' ' && ch != '\t') col--;
+                    if (k > 7) t = TokenType.DOUBLE;
+                    else t = TokenType.FLOAT;
+                    //}
+                    //else
+                    //{
+                    //    ch = GetChar();
+                    //    t = TokenType.ERROR;
+                    //}
                 }
-                else if (ch == 'f')
-                {
-                    value += ch;
-                    t = TokenType.FLOAT;
-                }
+                //else if (ch == 'f')
+                //{
+                //    value += ch;
+                //    t = TokenType.FLOAT;
+                //}
                 else if (char.IsLetter(ch))
                 {
                     value += ch;

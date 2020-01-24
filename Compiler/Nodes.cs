@@ -37,16 +37,50 @@ namespace Compiler
     class NodeIntLiteral : Node
     {
         public int value;
-        public override string ToString(string indent, bool last)
-        {
-            var decoration = GetLogDecoration(indent, true);
-            var res = decoration.Prefix + string.Format(" NodeIntValue {0}\n", value);
-            return res;
-        }
+        public override string ToString(string indent, bool last) => 
+            GetLogDecoration(indent, true).Prefix + string.Format(" NodeIntValue {0}\n", value);
     }
+
+    class NodeFloatLiteral : Node
+    {
+        public double value;
+        public override string ToString(string indent, bool last) =>
+            GetLogDecoration(indent, true).Prefix + string.Format(" NodeFloatValue {0}\n", value);
+    }
+    class NodeDoubleLiteral : Node
+    {
+        public double value;
+        public override string ToString(string indent, bool last) =>
+            GetLogDecoration(indent, true).Prefix + string.Format(" NodeDoubleValue {0}\n", value);
+    }
+    class NodeBoolLiteral : Node
+    {
+        public bool value;
+        public override string ToString(string indent, bool last) =>
+           GetLogDecoration(indent, true).Prefix + string.Format(" NodeBoolValue {0}\n", value);
+    }
+    class NodeCharLiteral : Node
+    {
+        public char value;
+        public override string ToString(string indent, bool last) =>
+           GetLogDecoration(indent, true).Prefix + string.Format(" NodeCharValue {0}\n", value);
+    }
+    class NodeStringLiteral : Node
+    {
+        public string value;
+        public override string ToString(string indent, bool last) =>
+           GetLogDecoration(indent, true).Prefix + string.Format(" NodeStringValue {0}\n", value);
+    }
+
+    public enum ResType
+    {
+        NUM, BOOL, LIST, ELEMENT, STRING, IDENTIFIER
+    }
+
     class NodeBinaryOp : Node
     {
         public string op;
+        public ResType resType;
         public Node left;
         public Node right;
         public override string ToString(string indent, bool last)
@@ -57,12 +91,6 @@ namespace Compiler
             res += right.ToString(decoration.Indent, true);
             return res;
         }
-    }
-    class NodeBoolean : Node
-    {
-        public string value;
-        public override string ToString(string indent, bool last) =>
-           GetLogDecoration(indent, true).Prefix + string.Format(" NodeBoolean {0}\n", value);
     }
 
     class NodeLine : Node
