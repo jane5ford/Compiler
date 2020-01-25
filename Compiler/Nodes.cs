@@ -242,13 +242,6 @@ namespace Compiler
             return res;
         }
     }
-
-    class NodeEmptyStatement : Node
-    {
-        public override string ToString(string indent, bool last) =>
-            GetLogDecoration(indent, true).Prefix + string.Format(" EmptyStatement\n");
-    }
-
     class NodeError : Node
     {
         public override string ToString(string indent, bool last) =>

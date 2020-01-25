@@ -1,2 +1,15 @@
-{ if (a>b) { a = b + c; var a = b + c;}
-while (true) var a; }
+{
+var i = 0;
+while (true)
+{
+	i++;
+	a = b + c;
+	if (a > b) 
+	{ 
+		a = b; 
+		b++;
+	}
+	else 
+		break;
+}
+}

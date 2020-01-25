@@ -29,45 +29,33 @@ namespace Compiler
             if (operand is NodeIdentifier) return ResType.IDENTIFIER;
             return ResType.ERROR;
         }
-        public Node ParseStatementList()
+        public Node ParseStatement()
         {
-            List<Node> list = new List<Node>();
-            var current = ParseStatement();
-            if (current is NodeError)
-            {
-                return new NodeError();
-            }
-            list.Add(current);
-            var st = ParseStatementList();
-            if (st == null || st is NodeError) { }
-            else
-            {
-                NodeList next = (NodeList)st;
-                foreach (Node n in next.list)
-                    list.Add(n);
-            }
-            return new NodeList() { list = list };
-        }
-
-        public Node ParseBlock()
-        {
+            List<Node> lines = new List<Node>();
             Token t = lexer.GetNext();
             if (t.value == "{")
             {
-                var sl = ParseStatementList();
-                if ((t = lexer.GetNext()).value == "}")
-                    return sl;
-                return new NodeError();
+                t = lexer.GetNext();
+                while (t.value != "}") 
+                {
+                    lexer.PutBack(t);
+                    var s = ParseNewLine();
+                    lines.Add(s);
+                    t = lexer.GetNext();
+                }
             }
-            lexer.PutBack(t);
-            var s = ParseStatement();
-            return s;
+            else
+            {
+                lexer.PutBack(t);
+                var s = ParseNewLine();
+                lines.Add(s);
+            }
+            return new NodeList() { list = lines };
         }
 
-        public Node ParseStatement()
+        private Node ParseNewLine()
         {
             Node p;
-            Token t;
             if ((p = ParseExpression()) == null)
                 if ((p = ParseJumpStatement()) == null)
                     if ((p = ParseVariableDeclaration()) == null)
@@ -76,19 +64,15 @@ namespace Compiler
                         {
                             if ((p = ParseIterationStatement()) is NodeError)
                             {
-                                t = lexer.GetNext();
-                                if (t.type == TokenType.PUNCTUATION) return new NodeEmptyStatement();
-                                lexer.PutBack(t);
                                 return new NodeError();
                             }
                             return p;
                         }
                         return p;
                     }
-            t = lexer.GetNext();
+            Token t = lexer.GetNext();
             if (t.type == TokenType.PUNCTUATION)
                 return p;
-            if (t.type == TokenType.END_OF_FILE) return new NodeError();
             lexer.PutBack(t);
             return new NodeError();
         }
@@ -248,6 +232,7 @@ namespace Compiler
             }
             if (t.value == "!")
             {
+                //Console.WriteLine(lexer.GetNext().value);
                 var e = ParseExpression();
                 var op = t.value;
                 {
@@ -285,8 +270,7 @@ namespace Compiler
                     if (DefineResType(exp) == ResType.BOOL)
                     {
                         if (lexer.GetNext().value != ")") return new NodeError();
-
-                        Node s = ParseBlock();
+                        Node s = ParseStatement();
                         sections.Add(new NodeCondSection() { op = op, condition = exp, statement = s });
                         NodeList pes = (NodeList)ParseElifSection();
                         if (pes != null)
@@ -322,7 +306,7 @@ namespace Compiler
                 }
                 lexer.PutBack(t);
                 List<Node> sect = new List<Node>();
-                sect.Add(new NodeCondSection() { op = op, statement = (NodeList)ParseBlock() });
+                sect.Add(new NodeCondSection() { op = op, statement = (NodeList)ParseStatement() });
                 return new NodeList() { sectionName = op, list = sect };
             }
             lexer.PutBack(t);
@@ -340,7 +324,7 @@ namespace Compiler
                     if (DefineResType(e) == ResType.BOOL)
                     {
                         if (lexer.GetNext().value != ")") return new NodeError();
-                        var s = ParseBlock();
+                        var s = ParseStatement();
                         return new NodeWhileStatement()
                         {
                             expression = e,
@@ -365,7 +349,7 @@ namespace Compiler
                                 var iterator = ParseExpression();
                                 if (DefineResType(iterator) == ResType.IDENTIFIER && lexer.GetNext().value == ")")
                                 {
-                                    var s = ParseBlock();
+                                    var s = ParseStatement(); //= ParseEmbeddedStatement();
                                     return new NodeForStatement()
                                     {
                                         initializer = initializer,
@@ -399,7 +383,7 @@ namespace Compiler
                                 {
                                     if (lexer.GetNext().value == ")")
                                     {
-                                        var s = ParseBlock();
+                                        var s = ParseStatement();
                                         return new NodeForeachStatement()
                                         {
                                             vt = vt.value, id = (NodeIdentifier)id, list = list, statement = s
