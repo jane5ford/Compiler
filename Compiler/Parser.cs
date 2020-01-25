@@ -232,6 +232,7 @@ namespace Compiler
             }
             if (t.value == "!")
             {
+                //Console.WriteLine(lexer.GetNext().value);
                 var e = ParseExpression();
                 var op = t.value;
                 {
@@ -306,7 +307,11 @@ namespace Compiler
                 lexer.PutBack(t);
                 List<Node> sect = new List<Node>();
                 sect.Add(new NodeCondSection() { op = op, statement = (NodeList)ParseStatement() });
+<<<<<<< HEAD
                 return new NodeList() { name = op, list = sect };
+=======
+                return new NodeList() { sectionName = op, list = sect };
+>>>>>>> parent of 8f4a9cc... Fixing errors
             }
             lexer.PutBack(t);
             return null;

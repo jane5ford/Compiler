@@ -239,6 +239,7 @@ namespace Compiler
             return res;
         }
     }
+<<<<<<< HEAD
 
     class NodeNamespaceDeclaration : Node
     {
@@ -253,6 +254,8 @@ namespace Compiler
         }
     }
     
+=======
+>>>>>>> parent of 8f4a9cc... Fixing errors
     class NodeError : Node
     {
         public override string ToString(string indent, bool last) =>

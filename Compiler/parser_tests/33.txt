@@ -4,7 +4,11 @@ while (true)
 {
 	i++;
 	a = b + c;
+<<<<<<< HEAD
 	if (a>b) 
+=======
+	if (a > b) 
+>>>>>>> parent of 8f4a9cc... Fixing errors
 	{ 
 		a = b; 
 		b++;

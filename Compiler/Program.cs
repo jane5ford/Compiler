@@ -61,8 +61,12 @@ namespace Compiler
             if (i > 23 && i < 27) node = parser.ParseExpression();
             if (i > 26 && i < 31) node = parser.ParseIterationStatement();
             //if (i == 32) node = parser.ParseConditional();
+<<<<<<< HEAD
             if (i > 30 && i < 34) node = parser.ParseStatement();
             if (i > 33) node = parser.ParseNamespaceDeclaration();
+=======
+            if (i > 30) node = parser.ParseStatement();
+>>>>>>> parent of 8f4a9cc... Fixing errors
             Console.WriteLine(node.ToString());
         }
     }
