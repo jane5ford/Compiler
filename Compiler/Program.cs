@@ -18,12 +18,12 @@ namespace Compiler
 
         static void TestLexer()
         {
-            for (int i = 16; i <= 16; i++)
+            for (int i = 17; i <= 17; i++)
             {
                 StreamReader test = File.OpenText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                     @"C:\Users\ellia\source\repos\Compiler\Compiler\lexer_tests\tests\" + i + ".txt"));
-                StreamReader result = File.OpenText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                    @"C:\Users\ellia\source\repos\Compiler\Compiler\lexer_tests\results\" + i + ".txt"));
+                //StreamReader result = File.OpenText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                //    @"C:\Users\ellia\source\repos\Compiler\Compiler\lexer_tests\results\" + i + ".txt"));
                 Lexer lexer = new Lexer(test);
                 bool isCorrect = false;
                 while (true)
@@ -32,9 +32,9 @@ namespace Compiler
                     if (token.type == TokenType.END_OF_FILE) break;
                     //string res = token.row.ToString() + "\t" + token.col.ToString() + "\t" + token.type.ToString() + "\t" + token.value;
                     string res = token.ToString();
-                    //if (i==16) Console.WriteLine(res);
-                    if (res == result.ReadLine()) { isCorrect = true; }
-                    else { isCorrect = false; break; }
+                    if (i==17) Console.WriteLine(res);
+                    //if (res == result.ReadLine()) { isCorrect = true; }
+                    //else { isCorrect = false; break; }
                 }
                 Console.WriteLine("Test {0} : {1}", i, isCorrect);
             }
@@ -55,13 +55,13 @@ namespace Compiler
             Parser parser = new Parser(lexer2);
             Node node = null;
             if (i > 0 && i < 9) node = parser.ParseExpression();
-            if (i == 9) node = parser.ParseStatement();
+            if (i == 9) node = parser.ParseStatementList();
             if (i > 9 && i < 21) node = parser.ParseConditional();
             if (i > 20 && i < 22) node = parser.ParseRelationalExpession();
             if (i > 23 && i < 27) node = parser.ParseExpression();
             if (i > 26 && i < 31) node = parser.ParseIterationStatement();
-            //if (i == 32) node = parser.ParseConditional();
-            if (i > 30) node = parser.ParseStatement();
+            if (i > 30 && i < 33) node = parser.ParseStatementList();
+            if (i > 32) node = parser.ParseBlock();
             Console.WriteLine(node.ToString());
         }
     }

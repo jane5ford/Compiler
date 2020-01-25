@@ -92,35 +92,20 @@ namespace Compiler
                     int k = 0;
                     while (char.IsDigit(ch = GetChar()))
                     { value += ch; k++; }
-                    //if (ch == 'f')
-                    //{
-                    //value += ch;
                     if (ch != ' ' && ch != '\t') col--;
                     if (k > 7) t = TokenType.DOUBLE;
+                    else if (k == 0) t = TokenType.ERROR;
                     else t = TokenType.FLOAT;
-                    //}
-                    //else
-                    //{
-                    //    ch = GetChar();
-                    //    t = TokenType.ERROR;
-                    //}
                 }
-                //else if (ch == 'f')
-                //{
-                //    value += ch;
-                //    t = TokenType.FLOAT;
-                //}
                 else if (char.IsLetter(ch))
                 {
                     value += ch;
-                    ch = GetChar();
                     t = TokenType.ERROR;
                 }
                 else
                 {
                     t = TokenType.INT;
                     if (ch != ' ' && ch !='\t') col--;
-                    //Console.WriteLine(col);
                 }
                 return new Token(pos, str, t, value);
             }
@@ -152,7 +137,7 @@ namespace Compiler
                     value += ch;
                     t = TokenType.CHAR;
                 }
-                else t = TokenType.ERROR;
+                else { if (ch != ' ' && ch != '\t') col--; t = TokenType.ERROR; }
                 return new Token(pos, str, t, value);
             }
             else
@@ -169,16 +154,16 @@ namespace Compiler
                             t = TokenType.COMPARISING_OPERATOR;
                             value += ch;
                         }
-                        else 
+                        else
                         {
                             if (ch != ' ' && ch != '\t') col--;
-                            t = TokenType.ASSIGNMENT_OPERATOR; 
+                            t = TokenType.ASSIGNMENT_OPERATOR;
                         }
-                        
+
                     }
                     else
                     {
-                        if (ch == '+' || ch == '-' )
+                        if (ch == '+' || ch == '-')
                         {
                             if (value[0] == (ch = GetChar()))
                             {
@@ -199,12 +184,19 @@ namespace Compiler
                 }
                 else if (ch == '<' || ch == '>' || ch == '!')
                 {
-                    if ((ch = GetChar()) == '=') value += ch;
-                    else if (ch != ' ' && ch != '\t') col--; 
-                    if (value[0] == '!' && ch != '=') t = TokenType.LOGIC_OPERATOR;
-                    else { if (ch != ' ' && ch != '\t') col--; t = TokenType.COMPARISING_OPERATOR; }
+                    if ((ch = GetChar()) == '=') 
+                    {
+                        value += ch;
+                        if (value[0] == '!' && ch != '=') t = TokenType.LOGIC_OPERATOR;
+                        else t = TokenType.COMPARISING_OPERATOR;
+                    }
+                    else 
+                    { 
+                        if (ch != ' ' && ch != '\t') col--; 
+                        t = TokenType.COMPARISING_OPERATOR; 
+                    }
                 }
-                else if (ch == '&' || ch == '|')  
+                else if (ch == '&' || ch == '|')
                 {
                     if ((ch = GetChar()) == value[0])
                     {
@@ -215,9 +207,9 @@ namespace Compiler
                     {
                         if (ch != ' ' && ch != '\t') col--;
                         t = TokenType.ERROR;
-                    }                        
+                    }
                 }
-                else t = TokenType.ERROR;
+                else { if (ch != ' ' && ch != '\t') col--; t = TokenType.ERROR; }
                 return new Token(pos, str, t, value);
             }
         }
