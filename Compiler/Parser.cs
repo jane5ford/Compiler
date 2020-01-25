@@ -310,8 +310,11 @@ namespace Compiler
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
                 return new NodeList() { name = op, list = sect };
 =======
+=======
+>>>>>>> parent of 8f4a9cc... Fixing errors
 =======
 >>>>>>> parent of 8f4a9cc... Fixing errors
 =======
