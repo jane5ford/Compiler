@@ -1,0 +1,7 @@
+namespace Compiler
+{
+    abstract class Node
+    {
+	int i = 0;
+    }
+}

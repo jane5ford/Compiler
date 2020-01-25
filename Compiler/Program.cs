@@ -61,7 +61,8 @@ namespace Compiler
             if (i > 23 && i < 27) node = parser.ParseExpression();
             if (i > 26 && i < 31) node = parser.ParseIterationStatement();
             //if (i == 32) node = parser.ParseConditional();
-            if (i > 30) node = parser.ParseStatement();
+            if (i > 30 && i < 34) node = parser.ParseStatement();
+            if (i > 33) node = parser.ParseNamespaceDeclaration();
             Console.WriteLine(node.ToString());
         }
     }

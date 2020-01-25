@@ -27,7 +27,6 @@ namespace Compiler
         
     }
 
-
     class NodeIdentifier : Node
     {
         public string name;
@@ -160,12 +159,12 @@ namespace Compiler
 
     class NodeList : Node
     {
-        public string sectionName;
+        public string name;
         public List<Node> list;
         public override string ToString(string indent, bool last)
         {
             var decoration = GetLogDecoration(indent, last);
-            var res = decoration.Prefix + string.Format(" Statement {0}\n", sectionName);
+            var res = decoration.Prefix + string.Format(" Statement {0}\n", name);
             foreach (Node nl in list)
                 if (nl == list[list.Count - 1]) res += nl.ToString(decoration.Indent, true);
                 else res += nl.ToString(decoration.Indent, false);
@@ -211,7 +210,6 @@ namespace Compiler
         public NodeIdentifier id;
         public Node list;
         public Node statement;
-        public Node jump;
         public override string ToString(string indent, bool last)
         {
             var decoration = GetLogDecoration(indent, last);
@@ -219,7 +217,6 @@ namespace Compiler
             res += decoration.Prefix + string.Format(" {0}\n", vt);
             res += id.ToString(decoration.Indent, false);
             res += list.ToString(decoration.Indent, false);
-
             res += statement.ToString(decoration.Indent, true);
             return res;
         }
@@ -242,6 +239,20 @@ namespace Compiler
             return res;
         }
     }
+
+    class NodeNamespaceDeclaration : Node
+    {
+        public string name;
+        public Node body;
+        public override string ToString(string indent, bool last)
+        {
+            var decoration = GetLogDecoration(indent, last);
+            var res = decoration.Prefix + string.Format(" Namespace {0}\n", name);
+            res += body.ToString(decoration.Indent, true);
+            return res;
+        }
+    }
+    
     class NodeError : Node
     {
         public override string ToString(string indent, bool last) =>

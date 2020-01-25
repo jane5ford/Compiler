@@ -232,7 +232,6 @@ namespace Compiler
             }
             if (t.value == "!")
             {
-                //Console.WriteLine(lexer.GetNext().value);
                 var e = ParseExpression();
                 var op = t.value;
                 {
@@ -281,7 +280,7 @@ namespace Compiler
 
                         return new NodeList()
                         {
-                            sectionName = op,
+                            name = op,
                             list = sections
                         };
                     }
@@ -307,7 +306,7 @@ namespace Compiler
                 lexer.PutBack(t);
                 List<Node> sect = new List<Node>();
                 sect.Add(new NodeCondSection() { op = op, statement = (NodeList)ParseStatement() });
-                return new NodeList() { sectionName = op, list = sect };
+                return new NodeList() { name = op, list = sect };
             }
             lexer.PutBack(t);
             return null;
@@ -402,9 +401,13 @@ namespace Compiler
         private Node ParseJumpStatement()
         {
             Token t = lexer.GetNext();
-            if (t.value == "break" || t.value == "return")
+            if (t.value == "break")
             {
                 return new NodeJumpStatement() { value = t.value };
+            }
+            if (t.value == "return")
+            {
+                //сделать после парсинга методов и функций
             }
             lexer.PutBack(t);
             return null;
@@ -424,6 +427,104 @@ namespace Compiler
             lexer.PutBack(t);
             return null;
         }
-        
+        public Node ParseNamespaceDeclaration()
+        {
+            Token t = lexer.GetNext();
+            if (t.value == "namespace")
+            {
+                if ((t = lexer.GetNext()).type == TokenType.IDENTIFIER)
+                {
+                    return new NodeNamespaceDeclaration() { name = t.value, body = ParseNamespaceBody() };
+                }
+                return new NodeError();
+            }
+            lexer.PutBack(t);
+            return new NodeError();
+        }
+        private Node ParseNamespaceBody()
+        {
+            Token t = lexer.GetNext();
+            if (t.value == "{")
+            {
+                var c = ParseClassDeclaration();
+                if (lexer.GetNext().value == "}") return c;
+                return new NodeError();
+            }
+            lexer.PutBack(t);
+            return new NodeError();
+        }
+        private Node ParseClassDeclaration()
+        {
+            Token t = lexer.GetNext();
+            List<string> modifiers = new List<string>();
+            if (t.value == "public" || t.value == "private" || t.value == "protected")
+            {
+                modifiers.Add(t.value); 
+                t = lexer.GetNext();
+            }
+            if (t.value == "abstract" || t.value == "static") 
+            { 
+                modifiers.Add(t.value); 
+                t = lexer.GetNext(); 
+            }
+            if (t.value == "class") 
+            {
+                t = lexer.GetNext();
+                if (t.type == TokenType.IDENTIFIER)
+                {
+                    return ParseClassBody();
+                }
+            }
+            if (modifiers.Count == 0) lexer.PutBack(t);
+            return new NodeError();
+        }
+        private Node ParseClassBody()
+        {
+            Token t = lexer.GetNext();
+            if (t.value == "{")
+            {
+                var cm = ParseClassMemberDeclarations();
+                if (lexer.GetNext().value == "}") return cm;
+                return new NodeError();
+            }
+            lexer.PutBack(t);
+            return new NodeError();
+        }
+        private Node ParseClassMemberDeclarations()
+        {
+            Token t = lexer.GetNext();
+            if (t.value != "}" && t.type != TokenType.END_OF_FILE)
+            {
+                lexer.PutBack(t);
+                List<Node> list = new List<Node>();
+                list.Add(ParseClassMemberDeclaration());
+                var cmd = ParseClassMemberDeclarations();
+                if (cmd is null) { }
+                else { 
+                    NodeList next = (NodeList)cmd;
+                    foreach (Node n in next.list)
+                    {
+                        list.Add(n);
+                    }
+                }
+                return new NodeList() { list = list };
+            }
+            lexer.PutBack(t);
+            return null;
+        }
+        private Node ParseClassMemberDeclaration()
+        {
+            //constant_declaration
+            //method_declaration
+            //constructor_declaration
+            //type_declaration
+            Node p;
+            if ((p = ParseVariableDeclaration()) == null) { return null; }
+            Token t = lexer.GetNext();
+            if (t.type == TokenType.PUNCTUATION)
+                return p;
+            lexer.PutBack(t);
+            return new NodeError();
+        }
     }
 }
