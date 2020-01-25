@@ -196,8 +196,9 @@ namespace Compiler
                 else if (ch == '<' || ch == '>' || ch == '!')
                 {
                     if ((ch = GetChar()) == '=') value += ch;
+                    else if (ch != ' ' && ch != '\t') col--; 
                     if (value[0] == '!' && ch != '=') t = TokenType.LOGIC_OPERATOR;
-                    else t = TokenType.COMPARISING_OPERATOR;
+                    else { if (ch != ' ' && ch != '\t') col--; t = TokenType.COMPARISING_OPERATOR; }
                 }
                 else if (ch == '&' || ch == '|')  
                 {

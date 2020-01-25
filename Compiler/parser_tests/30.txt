@@ -1,0 +1,6 @@
+while (true)
+{
+	i++;
+	a = b + c;
+	if (a > 100) break;
+}

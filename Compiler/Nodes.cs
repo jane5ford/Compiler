@@ -27,6 +27,7 @@ namespace Compiler
         
     }
 
+
     class NodeIdentifier : Node
     {
         public string name;
@@ -72,9 +73,16 @@ namespace Compiler
            GetLogDecoration(indent, true).Prefix + string.Format(" NodeStringValue {0}\n", value);
     }
 
+    class NodeVariableType : Node
+    {
+        public string value;
+        public override string ToString(string indent, bool last) =>
+           GetLogDecoration(indent, true).Prefix + string.Format(" NodeVariableType {0}\n", value);
+    }
+
     public enum ResType
     {
-        NUM, BOOL, LIST, ELEMENT, STRING, IDENTIFIER
+        NUM, BOOL, LIST, ELEMENT, STRING, IDENTIFIER, ERROR
     }
 
     class NodeBinaryOp : Node
@@ -89,6 +97,20 @@ namespace Compiler
             var res = decoration.Prefix + string.Format(" Binary {0}\n", op);
             res += left.ToString(decoration.Indent, false);
             res += right.ToString(decoration.Indent, true);
+            return res;
+        }
+    }
+
+    class NodeUnaryOp : Node
+    {
+        public string op;
+        public ResType resType;
+        public Node left;
+        public override string ToString(string indent, bool last)
+        {
+            var decoration = GetLogDecoration(indent, last);
+            var res = decoration.Prefix + string.Format(" Unary {0}\n", op);
+            res += left.ToString(decoration.Indent, true);
             return res;
         }
     }
@@ -151,6 +173,78 @@ namespace Compiler
         }
     }
 
+    class NodeWhileStatement : Node
+    {
+        public Node expression;
+        public Node statement;
+        public override string ToString(string indent, bool last)
+        {
+            var decoration = GetLogDecoration(indent, last);
+            var res = decoration.Prefix + string.Format(" Iteration While\n");
+            res += expression.ToString(decoration.Indent, false);
+            res += statement.ToString(decoration.Indent, true);
+            return res;
+        }
+    }
+    class NodeForStatement : Node
+    {
+        public Node initializer;
+        public NodeBinaryOp condition;
+        public Node iterator;
+        public Node statement;
+        public Node jump;
+        public override string ToString(string indent, bool last)
+        {
+            var decoration = GetLogDecoration(indent, last);
+            var res = decoration.Prefix + string.Format(" Iteration For\n");
+            res += initializer.ToString(decoration.Indent, false);
+            res += condition.ToString(decoration.Indent, false);
+            res += iterator.ToString(decoration.Indent, false);
+            res += statement.ToString(decoration.Indent, true);
+            return res;
+        }
+    }
 
+    class NodeForeachStatement : Node
+    {
+        public NodeVariableType vt;
+        public NodeIdentifier id;
+        public Node list;
+        public Node statement;
+        public Node jump;
+        public override string ToString(string indent, bool last)
+        {
+            var decoration = GetLogDecoration(indent, last);
+            var res = decoration.Prefix + string.Format(" Iteration Foreach\n");
+            res += vt.ToString(decoration.Indent, false);
+            res += id.ToString(decoration.Indent, false);
+            res += list.ToString(decoration.Indent, false);
 
+            res += statement.ToString(decoration.Indent, true);
+            return res;
+        }
+    }
+    class NodeJumpStatement : Node
+    {
+        public string value;
+        public override string ToString(string indent, bool last) =>
+           GetLogDecoration(indent, true).Prefix + string.Format(" NodeJumpValue {0}\n", value);
+    }
+    class NodeVariableDeclaration : Node
+    {
+        public string type;
+        public Node id;
+        public override string ToString(string indent, bool last)
+        {
+            var decoration = GetLogDecoration(indent, last);
+            var res = decoration.Prefix + string.Format(" VariableType {0}\n", type);
+            res += id.ToString(decoration.Indent, true);
+            return res;
+        }
+    }
+    class NodeError : Node
+    {
+        public override string ToString(string indent, bool last) =>
+           GetLogDecoration(indent, true).Prefix + string.Format(" Error\n");
+    }
 }

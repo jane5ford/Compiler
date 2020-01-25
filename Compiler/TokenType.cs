@@ -3,6 +3,7 @@
     ERROR,
     IDENTIFIER,
     KEYWORD,
+    TYPE,
     SYMBOL,
     STRING,
     CHAR,
