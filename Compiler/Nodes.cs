@@ -240,6 +240,7 @@ namespace Compiler
         }
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
     class NodeNamespaceDeclaration : Node
     {
@@ -254,6 +255,8 @@ namespace Compiler
         }
     }
     
+=======
+>>>>>>> parent of 8f4a9cc... Fixing errors
 =======
 >>>>>>> parent of 8f4a9cc... Fixing errors
     class NodeError : Node

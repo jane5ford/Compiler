@@ -308,8 +308,11 @@ namespace Compiler
                 List<Node> sect = new List<Node>();
                 sect.Add(new NodeCondSection() { op = op, statement = (NodeList)ParseStatement() });
 <<<<<<< HEAD
+<<<<<<< HEAD
                 return new NodeList() { name = op, list = sect };
 =======
+=======
+>>>>>>> parent of 8f4a9cc... Fixing errors
                 return new NodeList() { sectionName = op, list = sect };
 >>>>>>> parent of 8f4a9cc... Fixing errors
             }
