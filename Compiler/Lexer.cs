@@ -73,6 +73,10 @@ namespace Compiler
                     if (value == "true" || value == "false") t = TokenType.BOOLEAN; 
                     else t = TokenType.KEYWORD;
                 }
+                else if (dictionary.varType.Contains(value))
+                {
+                    t = TokenType.VARTYPE;
+                }
                 else t = TokenType.IDENTIFIER;
                 if (ch != ' ' && ch != '\t') col--;
                 return new Token(pos, str, t, value);

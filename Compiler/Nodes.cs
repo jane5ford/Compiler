@@ -146,7 +146,7 @@ namespace Compiler
         public string op;
         public bool elif = false;
         public Node condition;
-        public NodeList statement;
+        public Node statement;
         public override string ToString(string indent, bool last)
         {
             var decoration = GetLogDecoration(indent, last);
@@ -207,7 +207,7 @@ namespace Compiler
 
     class NodeForeachStatement : Node
     {
-        public NodeVariableType vt;
+        public string vt;
         public NodeIdentifier id;
         public Node list;
         public Node statement;
@@ -216,7 +216,7 @@ namespace Compiler
         {
             var decoration = GetLogDecoration(indent, last);
             var res = decoration.Prefix + string.Format(" Iteration Foreach\n");
-            res += vt.ToString(decoration.Indent, false);
+            res += decoration.Prefix + string.Format(" {0}\n", vt);
             res += id.ToString(decoration.Indent, false);
             res += list.ToString(decoration.Indent, false);
 

@@ -41,7 +41,7 @@ namespace Compiler
         }
         static void TestParser()
         {
-            int i = 31;
+            int i = 33;
             StreamReader test2 = File.OpenText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                     @"C:\Users\ellia\source\repos\Compiler\Compiler\parser_tests\" + i + ".txt"));
             Lexer lexer2 = new Lexer(test2);
@@ -60,6 +60,7 @@ namespace Compiler
             if (i > 20 && i < 22) node = parser.ParseRelationalExpession();
             if (i > 23 && i < 27) node = parser.ParseExpression();
             if (i > 26 && i < 31) node = parser.ParseIterationStatement();
+            //if (i == 32) node = parser.ParseConditional();
             if (i > 30) node = parser.ParseStatement();
             Console.WriteLine(node.ToString());
         }
