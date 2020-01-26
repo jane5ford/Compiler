@@ -6,7 +6,7 @@ using System.IO;
 using System.Text.Json;
 
 namespace Compiler
-{    
+{
     class Lexer
     {
         Token oldToken;
@@ -26,7 +26,6 @@ namespace Compiler
             this.sr = sr;
             currentLine = sr.ReadLine();
         }
-
         private char GetChar()
         {
             if (currentLine == null) return '\0';
@@ -41,16 +40,15 @@ namespace Compiler
             row++;
             return ' ';
         }
-
         public Token GetNext() //проверить комментарии
         {
             TokenType t;
             if (oldToken != null)
             {
-                Token to = oldToken; 
+                Token to = oldToken;
                 oldToken = null;
                 return to;
-            } 
+            }
             ch = GetChar();
             while ((ch == ' ') || ch == '\t')
             {
@@ -70,7 +68,7 @@ namespace Compiler
                     value += ch;
                 if (dictionary.keyWord.Contains(value))
                 {
-                    if (value == "true" || value == "false") t = TokenType.BOOLEAN; 
+                    if (value == "true" || value == "false") t = TokenType.BOOLEAN;
                     else t = TokenType.KEYWORD;
                 }
                 else if (dictionary.varType.Contains(value))
@@ -92,35 +90,20 @@ namespace Compiler
                     int k = 0;
                     while (char.IsDigit(ch = GetChar()))
                     { value += ch; k++; }
-                    //if (ch == 'f')
-                    //{
-                    //value += ch;
                     if (ch != ' ' && ch != '\t') col--;
                     if (k > 7) t = TokenType.DOUBLE;
+                    else if (k == 0) t = TokenType.ERROR;
                     else t = TokenType.FLOAT;
-                    //}
-                    //else
-                    //{
-                    //    ch = GetChar();
-                    //    t = TokenType.ERROR;
-                    //}
                 }
-                //else if (ch == 'f')
-                //{
-                //    value += ch;
-                //    t = TokenType.FLOAT;
-                //}
                 else if (char.IsLetter(ch))
                 {
                     value += ch;
-                    ch = GetChar();
                     t = TokenType.ERROR;
                 }
                 else
                 {
                     t = TokenType.INT;
-                    if (ch != ' ' && ch !='\t') col--;
-                    //Console.WriteLine(col);
+                    if (ch != ' ' && ch != '\t') col--;
                 }
                 return new Token(pos, str, t, value);
             }
@@ -152,7 +135,7 @@ namespace Compiler
                     value += ch;
                     t = TokenType.CHAR;
                 }
-                else t = TokenType.ERROR;
+                else { if (ch != ' ' && ch != '\t') col--; t = TokenType.ERROR; }
                 return new Token(pos, str, t, value);
             }
             else
@@ -169,17 +152,23 @@ namespace Compiler
                             t = TokenType.COMPARISING_OPERATOR;
                             value += ch;
                         }
-                        else 
+                        else
                         {
                             if (ch != ' ' && ch != '\t') col--;
-                            t = TokenType.ASSIGNMENT_OPERATOR; 
+                            t = TokenType.ASSIGNMENT_OPERATOR;
                         }
-                        
+
                     }
                     else
                     {
-                        if (ch == '+' || ch == '-' )
+                        if ((ch = GetChar()) == '=') 
+                        { 
+                            value += ch; 
+                            t = TokenType.ASSIGNMENT_OPERATOR; 
+                        }
+                        else if (ch == '+' || ch == '-')
                         {
+                            if (ch != ' ' && ch != '\t') col--;
                             if (value[0] == (ch = GetChar()))
                             {
                                 t = TokenType.ASSIGNMENT_OPERATOR;
@@ -193,18 +182,26 @@ namespace Compiler
                         }
                         else
                         {
+                            if (ch != ' ' && ch != '\t') col--;
                             t = TokenType.ARITHMETIC_OPERATOR;
                         }
                     }
                 }
                 else if (ch == '<' || ch == '>' || ch == '!')
                 {
-                    if ((ch = GetChar()) == '=') value += ch;
-                    else if (ch != ' ' && ch != '\t') col--; 
-                    if (value[0] == '!' && ch != '=') t = TokenType.LOGIC_OPERATOR;
-                    else { if (ch != ' ' && ch != '\t') col--; t = TokenType.COMPARISING_OPERATOR; }
+                    if ((ch = GetChar()) == '=')
+                    {
+                        value += ch;
+                        if (value[0] == '!' && ch != '=') t = TokenType.LOGIC_OPERATOR;
+                        else t = TokenType.COMPARISING_OPERATOR;
+                    }
+                    else
+                    {
+                        if (ch != ' ' && ch != '\t') col--;
+                        t = TokenType.COMPARISING_OPERATOR;
+                    }
                 }
-                else if (ch == '&' || ch == '|')  
+                else if (ch == '&' || ch == '|')
                 {
                     if ((ch = GetChar()) == value[0])
                     {
@@ -215,19 +212,16 @@ namespace Compiler
                     {
                         if (ch != ' ' && ch != '\t') col--;
                         t = TokenType.ERROR;
-                    }                        
+                    }
                 }
-                else t = TokenType.ERROR;
+                else { if (ch != ' ' && ch != '\t') col--; t = TokenType.ERROR; }
                 return new Token(pos, str, t, value);
             }
         }
-
         public void PutBack(Token token)
         {
             if (oldToken != null) throw new NotImplementedException();
             oldToken = token;
         }
-
-        
     }
 }

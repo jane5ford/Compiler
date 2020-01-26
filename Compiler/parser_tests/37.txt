@@ -1,0 +1,14 @@
+namespace Compiler
+{
+    public static class Person
+    {
+	public Person()
+	{
+	    for(i = 0; i<10; i++)
+            {
+		a = (i + b);
+		b *= 2;
+	    }
+	}
+    }
+}

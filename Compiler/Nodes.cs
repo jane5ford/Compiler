@@ -24,7 +24,7 @@ namespace Compiler
                 Prefix = indent + (last ? "└─" : "├─")
             };
         }
-        
+
     }
 
     class NodeIdentifier : Node
@@ -37,7 +37,7 @@ namespace Compiler
     class NodeIntLiteral : Node
     {
         public int value;
-        public override string ToString(string indent, bool last) => 
+        public override string ToString(string indent, bool last) =>
             GetLogDecoration(indent, true).Prefix + string.Format(" NodeIntValue {0}\n", value);
     }
 
@@ -164,7 +164,7 @@ namespace Compiler
         public override string ToString(string indent, bool last)
         {
             var decoration = GetLogDecoration(indent, last);
-            var res = decoration.Prefix + string.Format(" Statement {0}\n", name);
+            var res = decoration.Prefix + string.Format(" {0}\n", name);
             foreach (Node nl in list)
                 if (nl == list[list.Count - 1]) res += nl.ToString(decoration.Indent, true);
                 else res += nl.ToString(decoration.Indent, false);
@@ -239,11 +239,6 @@ namespace Compiler
             return res;
         }
     }
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
     class NodeNamespaceDeclaration : Node
     {
@@ -257,17 +252,81 @@ namespace Compiler
             return res;
         }
     }
-    
-=======
->>>>>>> parent of 8f4a9cc... Fixing errors
-=======
->>>>>>> parent of 8f4a9cc... Fixing errors
-=======
->>>>>>> parent of 8f4a9cc... Fixing errors
-=======
->>>>>>> parent of 8f4a9cc... Fixing errors
-=======
->>>>>>> parent of 8f4a9cc... Fixing errors
+    class NodeClassDeclaration : Node
+    {
+        public List<string> modifiers;
+        public NodeIdentifier identifier;
+        public Node body;
+        public override string ToString(string indent, bool last)
+        {
+            var decoration = GetLogDecoration(indent, last);
+            string res = "";
+            string name = identifier.name;
+            if (modifiers.Count == 0)
+                res = decoration.Prefix + string.Format(" class {0}\n", name);
+            if (modifiers.Count == 1)
+                res = decoration.Prefix + string.Format(" {0} class {1}\n", modifiers[0], name);
+            if (modifiers.Count == 2)
+                res = decoration.Prefix + string.Format(" {0} {1} class {2}\n", modifiers[0], modifiers[1], name);
+            if (modifiers.Count == 3)
+                res = decoration.Prefix + string.Format(" {0} {1} {2} class {3}\n", modifiers[0], modifiers[1], modifiers[2], name);
+            res += body.ToString(decoration.Indent, true);
+            return res;
+        }
+    }
+    class NodeConstructorDeclaration : Node
+    {
+        public string modifier;
+        public NodeIdentifier identifier;
+        public NodeList parameterList;
+        public Node body;
+        public override string ToString(string indent, bool last)
+        {
+            var decoration = GetLogDecoration(indent, last);
+            string res;
+            if (modifier == null) res = decoration.Prefix + string.Format(" {0}\n", identifier.name);
+            else res = decoration.Prefix + string.Format(" {0} {1}\n", modifier, identifier.name);
+            if (parameterList != null) res += parameterList.ToString(decoration.Indent, false);
+            if (body != null) res += body.ToString(decoration.Indent, true);
+            return res;
+        }
+    }
+    class NodeMethodDeclaration : Node
+    {
+        public string modifier;
+        public string type;
+        public NodeIdentifier identifier;
+        public NodeList parameterList;
+        public Node body;
+        public override string ToString(string indent, bool last)
+        {
+            var decoration = GetLogDecoration(indent, last);
+            string res;
+            if (modifier == null) res = decoration.Prefix + string.Format(" {0} {1}\n", type, identifier.name);
+            else res = decoration.Prefix + string.Format(" {0} {1} {2}\n", modifier, type, identifier.name);
+            if (parameterList != null) res += parameterList.ToString(decoration.Indent, false);
+            if (body != null) res += body.ToString(decoration.Indent, true);
+            return res;
+        }
+    }
+    class NodeParameter : Node
+    {
+        public string type;
+        public NodeIdentifier identifier;
+        public override string ToString(string indent, bool last)
+        {
+            var decoration = GetLogDecoration(indent, last);
+            var res = decoration.Prefix + string.Format(" Type {0}\n", type);
+            res += identifier.ToString(decoration.Indent, true);
+            return res;
+        }
+    }
+    class NodeEmptyStatement : Node
+    {
+        public override string ToString(string indent, bool last) =>
+            GetLogDecoration(indent, true).Prefix + string.Format(" EmptyStatement\n");
+    }
+
     class NodeError : Node
     {
         public override string ToString(string indent, bool last) =>

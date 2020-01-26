@@ -11,7 +11,7 @@ namespace Compiler
         {
             this.lexer = lexer;
         }
-       
+
         private ResType DefineResType(Node operand)
         {
             if (operand is NodeBinaryOp)
@@ -29,33 +29,48 @@ namespace Compiler
             if (operand is NodeIdentifier) return ResType.IDENTIFIER;
             return ResType.ERROR;
         }
-        public Node ParseStatement()
+
+        public Node ParseBlock()
         {
-            List<Node> lines = new List<Node>();
+
             Token t = lexer.GetNext();
             if (t.value == "{")
             {
-                t = lexer.GetNext();
-                while (t.value != "}") 
-                {
-                    lexer.PutBack(t);
-                    var s = ParseNewLine();
-                    lines.Add(s);
-                    t = lexer.GetNext();
-                }
+                var sl = ParseStatementList();
+                if ((t = lexer.GetNext()).value == "}")
+                    return sl;
+                lexer.PutBack(t);
+                return new NodeError();
             }
+            lexer.PutBack(t);
+            return ParseStatement();
+        }
+        public Node ParseStatementList()
+        {
+            Token t;
+            List<Node> list = new List<Node>();
+            t = lexer.GetNext();
+            if (t.type == TokenType.PARETHESES) { lexer.PutBack(t); return null; }
+            lexer.PutBack(t);
+            var current = ParseStatement();
+            if (current is NodeError || current == null)
+                return new NodeError();
+            list.Add(current);
+            var st = ParseStatementList();
+            if (st == null || st is NodeError) { }
             else
             {
-                lexer.PutBack(t);
-                var s = ParseNewLine();
-                lines.Add(s);
+                NodeList next = (NodeList)st;
+                foreach (Node n in next.list)
+                    list.Add(n);
             }
-            return new NodeList() { list = lines };
+            NodeList nl = new NodeList() { name = "block", list = list };
+            return nl;
         }
-
-        private Node ParseNewLine()
+        public Node ParseStatement()
         {
             Node p;
+            Token t;
             if ((p = ParseExpression()) == null)
                 if ((p = ParseJumpStatement()) == null)
                     if ((p = ParseVariableDeclaration()) == null)
@@ -64,16 +79,34 @@ namespace Compiler
                         {
                             if ((p = ParseIterationStatement()) is NodeError)
                             {
+                                t = lexer.GetNext();
+                                if (t.type == TokenType.PUNCTUATION) return new NodeEmptyStatement();
+                                lexer.PutBack(t);
                                 return new NodeError();
                             }
                             return p;
                         }
                         return p;
                     }
-            Token t = lexer.GetNext();
+            t = lexer.GetNext();
             if (t.type == TokenType.PUNCTUATION)
                 return p;
+            if (t.type == TokenType.END_OF_FILE) return new NodeError();
             lexer.PutBack(t);
+            return new NodeError();
+        }
+        public Node GetBinaryOp(Node left, Node right, string op, ResType opType, ResType resType)
+        {
+            var defleft = DefineResType(left);
+            var defright = DefineResType(right);
+            if ((defleft == opType || defleft == ResType.IDENTIFIER) && (defright == opType || defright == ResType.IDENTIFIER))
+                return new NodeBinaryOp
+                {
+                    left = left,
+                    right = right,
+                    op = op,
+                    resType = resType
+                };
             return new NodeError();
         }
         public Node ParseExpression()
@@ -83,55 +116,30 @@ namespace Compiler
             if (t.value == "||")
             {
                 var right = ParseExpression();
-                if ((DefineResType(left) == ResType.BOOL || DefineResType(left) == ResType.IDENTIFIER) &&
-                    (DefineResType(right) == ResType.BOOL || DefineResType(right) == ResType.IDENTIFIER))
-                {
-                    return new NodeBinaryOp
-                    {
-                        left = left,
-                        right = right,
-                        op = t.value,
-                        resType = ResType.BOOL
-                    };
-                }
-                return new NodeError();
+                return GetBinaryOp(left, right, t.value, ResType.BOOL, ResType.BOOL);
             }
             if (t.value == "+" || t.value == "-")
             {
                 var right = ParseExpression();
-                if ((DefineResType(left) == ResType.NUM || DefineResType(left) == ResType.IDENTIFIER) &&
-                     (DefineResType(right) == ResType.NUM || DefineResType(right) == ResType.IDENTIFIER))
-                {
-                    return new NodeBinaryOp
-                    {
-                        left = left,
-                        right = right,
-                        op = t.value,
-                        resType = ResType.NUM
-                    };
-                }
-                return new NodeError();
+                return GetBinaryOp(left, right, t.value, ResType.NUM, ResType.NUM);
             }
             if (t.type == TokenType.ASSIGNMENT_OPERATOR)
             {
                 if (left is NodeIdentifier)
                 {
-                    var op = t.value;
                     var right = ParseExpression();
                     if (right == null)
-                    {
                         return new NodeUnaryOp
                         {
                             left = left,
-                            op = op,
+                            op = t.value,
                             resType = ResType.IDENTIFIER
                         };
-                    }
                     return new NodeBinaryOp
                     {
                         left = left,
                         right = right,
-                        op = op,
+                        op = t.value,
                         resType = ResType.IDENTIFIER
                     };
                 }
@@ -146,31 +154,12 @@ namespace Compiler
             if (t.value == "&&")
             {
                 var right = ParseTerm();
-                if ((DefineResType(left) == ResType.BOOL || DefineResType(left) == ResType.IDENTIFIER) && 
-                    (DefineResType(right) == ResType.BOOL || DefineResType(right) == ResType.IDENTIFIER))
-                {
-                    return new NodeBinaryOp
-                    {
-                        left = left,
-                        right = right,
-                        op = t.value,
-                        resType = ResType.BOOL
-                    };
-                }
-                return new NodeError();
+                return GetBinaryOp(left, right, t.value, ResType.BOOL, ResType.BOOL);
             }
             if (t.value == "*" || t.value == "/")
             {
                 var right = ParseTerm();
-                
-                    return new NodeBinaryOp
-                    {
-                        left = left,
-                        right = right,
-                        op = t.value,
-                        resType = ResType.NUM
-                    };
-                
+                return GetBinaryOp(left, right, t.value, ResType.NUM, ResType.NUM);
             }
             lexer.PutBack(t);
             return left;
@@ -182,10 +171,11 @@ namespace Compiler
             if (t.value == "==" || t.value == "!=")
             {
                 var right = ParseEqualityExpression();
-                if (DefineResType(left) == DefineResType(right) || (DefineResType(left) == ResType.IDENTIFIER 
-                    && DefineResType(right) != ResType.IDENTIFIER) || (DefineResType(right) == ResType.IDENTIFIER
-                    && DefineResType(left) != ResType.IDENTIFIER))
-                {
+                var defleft = DefineResType(left);
+                var defright = DefineResType(right);
+                if (defleft == defright || (defleft == ResType.IDENTIFIER
+                    && defright != ResType.IDENTIFIER) || (defright == ResType.IDENTIFIER
+                    && defleft != ResType.IDENTIFIER))
                     return new NodeBinaryOp
                     {
                         left = left,
@@ -193,7 +183,6 @@ namespace Compiler
                         op = t.value,
                         resType = ResType.BOOL
                     };
-                }
             }
             lexer.PutBack(t);
             return left;
@@ -204,19 +193,8 @@ namespace Compiler
             Token t = lexer.GetNext();
             if (t.value == "<" || t.value == ">" || t.value == "<=" || t.value == ">=")
             {
-                var op = t.value;
                 var right = ParseExpression();
-                if ((DefineResType(left) == ResType.NUM || DefineResType(left) == ResType.IDENTIFIER) &&
-                     (DefineResType(right) == ResType.NUM || DefineResType(right) == ResType.IDENTIFIER))
-                {
-                    return new NodeBinaryOp()
-                    {
-                        left = left,
-                        right = right,
-                        op = op,
-                        resType = ResType.BOOL
-                    };
-                }
+                return GetBinaryOp(left, right, t.value, ResType.NUM, ResType.BOOL);
             }
             lexer.PutBack(t);
             return left;
@@ -232,17 +210,16 @@ namespace Compiler
             }
             if (t.value == "!")
             {
-                //Console.WriteLine(lexer.GetNext().value);
                 var e = ParseExpression();
-                var op = t.value;
-                {
+                var rtype = DefineResType(e);
+                if (rtype == ResType.BOOL || rtype == ResType.IDENTIFIER)
                     return new NodeUnaryOp
                     {
                         left = e,
-                        op = op,
+                        op = t.value,
                         resType = ResType.BOOL
                     };
-                }
+                return new NodeError();
             }
             if (t.type == TokenType.IDENTIFIER) { return new NodeIdentifier { name = t.value }; }
             if (t.type == TokenType.INT) { return new NodeIntLiteral { value = int.Parse(t.value) }; }
@@ -255,7 +232,7 @@ namespace Compiler
             lexer.PutBack(t);
             return null;
         }
-        
+
         public Node ParseConditional()
         {
             Token t;
@@ -263,14 +240,15 @@ namespace Compiler
             {
                 List<Node> sections = new List<Node>();
                 string op = "if";
-                
                 if (lexer.GetNext().value == "(")
                 {
                     var exp = ParseExpression();
                     if (DefineResType(exp) == ResType.BOOL)
                     {
                         if (lexer.GetNext().value != ")") return new NodeError();
-                        Node s = ParseStatement();
+
+                        Node s = ParseBlock();
+
                         sections.Add(new NodeCondSection() { op = op, condition = exp, statement = s });
                         NodeList pes = (NodeList)ParseElifSection();
                         if (pes != null)
@@ -278,7 +256,6 @@ namespace Compiler
                             List<Node> list = pes.list;
                             foreach (Node p in list) { sections.Add(p); };
                         }
-
                         return new NodeList()
                         {
                             name = op,
@@ -294,36 +271,20 @@ namespace Compiler
         private Node ParseElifSection()
         {
             Token t;
-            if ((t = lexer.GetNext()).value == "else") 
+            if ((t = lexer.GetNext()).value == "else")
             {
                 string op = t.value;
                 if ((t = lexer.GetNext()).value == "if")
                 {
                     lexer.PutBack(t);
                     NodeList pc = (NodeList)ParseConditional();
-                    ((NodeCondSection) pc.list[0]).elif = true;
+                    ((NodeCondSection)pc.list[0]).elif = true;
                     return pc;
                 }
                 lexer.PutBack(t);
                 List<Node> sect = new List<Node>();
-                sect.Add(new NodeCondSection() { op = op, statement = (NodeList)ParseStatement() });
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
+                sect.Add(new NodeCondSection() { op = op, statement = ParseBlock() });
                 return new NodeList() { name = op, list = sect };
-=======
-=======
->>>>>>> parent of 8f4a9cc... Fixing errors
-=======
->>>>>>> parent of 8f4a9cc... Fixing errors
-=======
->>>>>>> parent of 8f4a9cc... Fixing errors
-=======
->>>>>>> parent of 8f4a9cc... Fixing errors
-                return new NodeList() { sectionName = op, list = sect };
->>>>>>> parent of 8f4a9cc... Fixing errors
             }
             lexer.PutBack(t);
             return null;
@@ -335,12 +296,11 @@ namespace Compiler
             {
                 if (lexer.GetNext().value == "(")
                 {
-                    var op = t.value;
                     var e = ParseExpression();
                     if (DefineResType(e) == ResType.BOOL)
                     {
                         if (lexer.GetNext().value != ")") return new NodeError();
-                        var s = ParseStatement();
+                        var s = ParseBlock();
                         return new NodeWhileStatement()
                         {
                             expression = e,
@@ -348,15 +308,14 @@ namespace Compiler
                         };
                     }
                 }
+                return new NodeError();
             }
             if (t.value == "for")
             {
                 if (lexer.GetNext().value == "(")
                 {
-                    var op = t.value;
                     var initializer = ParseExpression();
                     if (DefineResType(initializer) == ResType.IDENTIFIER)
-                    {
                         if (lexer.GetNext().value == ";")
                         {
                             var condition = ParseRelationalExpession();
@@ -365,7 +324,7 @@ namespace Compiler
                                 var iterator = ParseExpression();
                                 if (DefineResType(iterator) == ResType.IDENTIFIER && lexer.GetNext().value == ")")
                                 {
-                                    var s = ParseStatement(); //= ParseEmbeddedStatement();
+                                    var s = ParseBlock();
                                     return new NodeForStatement()
                                     {
                                         initializer = initializer,
@@ -377,13 +336,11 @@ namespace Compiler
 
                             }
                         }
-                    }
                 }
                 return new NodeError();
             }
             if (t.value == "foreach")
             {
-                var op = t.value;
                 if (lexer.GetNext().value == "(")
                 {
                     var vt = lexer.GetNext();
@@ -391,23 +348,22 @@ namespace Compiler
                     {
                         var id = ParseFactor();
                         if (id is NodeIdentifier)
-                        {
                             if (lexer.GetNext().value == "in")
                             {
                                 var list = ParseExpression(); //нет определения списков
-                                if (DefineResType(list) == ResType.LIST) 
-                                {
+                                if (DefineResType(list) == ResType.LIST)
                                     if (lexer.GetNext().value == ")")
                                     {
-                                        var s = ParseStatement();
+                                        var s = ParseBlock();
                                         return new NodeForeachStatement()
                                         {
-                                            vt = vt.value, id = (NodeIdentifier)id, list = list, statement = s
+                                            vt = vt.value,
+                                            id = (NodeIdentifier)id,
+                                            list = list,
+                                            statement = s
                                         };
                                     }
-                                }
                             }
-                        } 
                     }
                 }
                 return new NodeError();
@@ -418,10 +374,9 @@ namespace Compiler
         private Node ParseJumpStatement()
         {
             Token t = lexer.GetNext();
-            if (t.value == "break")
-            {
-                return new NodeJumpStatement() { value = t.value };
-            }
+            if (t.value == "break" || t.value == "return")
+                if (t.value == "break")
+                    return new NodeJumpStatement() { value = t.value };
             if (t.value == "return")
             {
                 //сделать после парсинга методов и функций
@@ -436,9 +391,7 @@ namespace Compiler
             {
                 var e = ParseExpression();
                 if (DefineResType(e) == ResType.IDENTIFIER)
-                {
                     return new NodeVariableDeclaration() { type = t.value, id = e };
-                }
                 return new NodeError();
             }
             lexer.PutBack(t);
@@ -450,9 +403,7 @@ namespace Compiler
             if (t.value == "namespace")
             {
                 if ((t = lexer.GetNext()).type == TokenType.IDENTIFIER)
-                {
                     return new NodeNamespaceDeclaration() { name = t.value, body = ParseNamespaceBody() };
-                }
                 return new NodeError();
             }
             lexer.PutBack(t);
@@ -476,21 +427,19 @@ namespace Compiler
             List<string> modifiers = new List<string>();
             if (t.value == "public" || t.value == "private" || t.value == "protected")
             {
-                modifiers.Add(t.value); 
+                modifiers.Add(t.value);
                 t = lexer.GetNext();
             }
-            if (t.value == "abstract" || t.value == "static") 
-            { 
-                modifiers.Add(t.value); 
-                t = lexer.GetNext(); 
-            }
-            if (t.value == "class") 
+            if (t.value == "abstract" || t.value == "static")
             {
+                modifiers.Add(t.value);
                 t = lexer.GetNext();
-                if (t.type == TokenType.IDENTIFIER)
-                {
-                    return ParseClassBody();
-                }
+            }
+            if (t.value == "class")
+            {
+                var identifier = ParseFactor();
+                if (identifier is NodeIdentifier)
+                    return new NodeClassDeclaration() { modifiers = modifiers, identifier = (NodeIdentifier)identifier, body = ParseClassBody() };
             }
             if (modifiers.Count == 0) lexer.PutBack(t);
             return new NodeError();
@@ -517,31 +466,127 @@ namespace Compiler
                 list.Add(ParseClassMemberDeclaration());
                 var cmd = ParseClassMemberDeclarations();
                 if (cmd is null) { }
-                else { 
+                else
+                {
                     NodeList next = (NodeList)cmd;
                     foreach (Node n in next.list)
-                    {
                         list.Add(n);
-                    }
                 }
-                return new NodeList() { list = list };
+                return new NodeList() { list = list, name = "Class Member Declarations" };
             }
             lexer.PutBack(t);
             return null;
         }
         private Node ParseClassMemberDeclaration()
         {
-            //constant_declaration
-            //method_declaration
-            //constructor_declaration
-            //type_declaration
             Node p;
-            if ((p = ParseVariableDeclaration()) == null) { return null; }
+            if ((p = ParseVariableDeclaration()) == null)
+            {
+                if ((p = ParseConstructorDeclaration()) == null)
+                {
+                        return null;
+                }
+                return p;
+            }
             Token t = lexer.GetNext();
             if (t.type == TokenType.PUNCTUATION)
                 return p;
             lexer.PutBack(t);
             return new NodeError();
+        }
+        private Node ParseConstructorDeclaration()
+        {
+            Token t = lexer.GetNext();
+            string modifier = null;
+            if (t.value == "public" || t.value == "private" || t.value == "protected")
+                modifier = t.value;
+            else lexer.PutBack(t);
+            t = lexer.GetNext();
+            if (t.type == TokenType.IDENTIFIER)
+            {
+                lexer.PutBack(t);
+                var identifier = ParseFactor();
+                if (identifier is NodeIdentifier)
+                {
+                    if ((t = lexer.GetNext()).value == "(")
+                    {
+                        var pl = ParseParameterList();
+                        {
+                            if ((t = lexer.GetNext()).value == ")")
+                            {
+                                return new NodeConstructorDeclaration()
+                                {
+                                    modifier = modifier,
+                                    identifier = (NodeIdentifier)identifier,
+                                    parameterList = (NodeList)pl,
+                                    body = ParseBlock()
+                                };
+                            }
+                        }
+                    }
+                }
+                return new NodeError();
+            }
+            if (t.value == "void" || t.type == TokenType.VARTYPE)
+            {
+                string type = t.value;
+                var identifier = ParseFactor();
+                if (identifier is NodeIdentifier)
+                {
+                    if (lexer.GetNext().value == "(")
+                    {
+                        var pl = ParseParameterList();
+                        if (lexer.GetNext().value == ")")
+                            return new NodeMethodDeclaration()
+                            {
+                                modifier = modifier,
+                                type = type,
+                                identifier = (NodeIdentifier)identifier,
+                                parameterList = (NodeList)pl,
+                                body = ParseBlock()
+                            };
+                    }
+                }
+                return new NodeError();
+            }
+            lexer.PutBack(t);
+            return null;
+        }
+        private Node ParseParameterList()
+        {
+            Token t;
+            List<Node> list = new List<Node>();
+            var current = ParseParameter();
+            if (current is NodeParameter)
+            {
+                list.Add(current);
+                if ((t = lexer.GetNext()).value == ",")
+                {
+                    NodeList next = (NodeList)ParseParameterList();
+                    if (next != null)
+                        foreach (Node n in next.list)
+                            list.Add(n);
+                    else if (current is NodeError) return new NodeError();
+                    return new NodeList() { name = "Parameters", list = list };
+                }
+                lexer.PutBack(t);
+                return new NodeList() { name = "Parameters", list = list };
+            }
+            if (current is NodeError) return new NodeError();
+            return null;
+        }
+        private Node ParseParameter()
+        {
+            Token t = lexer.GetNext();
+            if (t.type == TokenType.VARTYPE)
+            {
+                var identifier = ParseFactor();
+                if (identifier is NodeIdentifier)
+                    return new NodeParameter() { type = t.value, identifier = (NodeIdentifier)identifier };
+                return new NodeError();
+            }
+            lexer.PutBack(t);
+            return null;
         }
     }
 }

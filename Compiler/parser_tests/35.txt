@@ -1,0 +1,8 @@
+namespace Compiler
+{
+    public static class Node
+    {
+	int i = 0;
+	
+    }
+}

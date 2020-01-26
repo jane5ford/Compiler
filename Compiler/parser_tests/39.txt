@@ -1,0 +1,16 @@
+namespace Compiler
+{
+    public static class Person
+    {
+	int a;
+	string s = "Hello World!";
+	public Person(char ch)
+	{
+	    for(i = 0; i<10; i++)
+            {
+		a = (i + b);
+		b *= 2;
+	    }
+	}
+    }
+}

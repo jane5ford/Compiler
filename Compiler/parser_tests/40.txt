@@ -1,0 +1,16 @@
+namespace Compiler
+{
+    class Person
+    {
+	int a;
+	string s = "Hello World!";
+	public Person(int a, string str, char ch)
+	{
+	    for(i = 0; i<10; i++)
+            {
+		a = (i + b);
+		b *= 2;
+	    }
+	}
+    }
+}
