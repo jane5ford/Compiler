@@ -93,7 +93,7 @@ namespace Compiler
                 return p;
             if (t.type == TokenType.END_OF_FILE) return new NodeError();
             lexer.PutBack(t);
-            return new NodeError();
+            return new NodeError { message = "\";\" is missed" };
         }
         public Node GetBinaryOp(Node left, Node right, string op, ResType opType, ResType resType)
         {
@@ -112,7 +112,7 @@ namespace Compiler
         public Node ParseExpression()
         {
             var left = ParseTerm();
-            var t = lexer.GetNext();
+            Token t = lexer.GetNext();
             if (t.value == "||")
             {
                 var right = ParseExpression();
@@ -144,7 +144,6 @@ namespace Compiler
                     };
                 }
             }
-            
             lexer.PutBack(t);
             return left;
         }
@@ -166,12 +165,9 @@ namespace Compiler
             {
                 if (left is NodeIdentifier)
                 {
-
                     var parameters = ParseInputParameterList();
                     if ((lexer.GetNext().value == ")"))
-                    {
                         return new NodeMethodExpression() { identifier = (NodeIdentifier)left, parameterList = (NodeList)parameters };
-                    }
                 }
                 return new NodeError();
             }
@@ -216,7 +212,17 @@ namespace Compiler
         private Node ParseFactor()
         {
             var t = lexer.GetNext();
-
+            if (t.value == "new")
+            {
+                var constructor = ParseTerm();
+                if (constructor is NodeMethodExpression) return new NodeUnaryOp
+                {
+                    left = constructor,
+                    op = t.value,
+                    resType = ResType.IDENTIFIER
+                };
+                return new NodeError { message = "there is now constructor" };
+            }
             if (t.value == "(")
             {
                 var e = ParseExpression();
@@ -243,11 +249,9 @@ namespace Compiler
             if (t.type == TokenType.BOOLEAN) { return new NodeBoolLiteral { value = Convert.ToBoolean(t.value) }; }
             if (t.type == TokenType.CHAR) { return new NodeCharLiteral { value = t.value[0] }; }
             if (t.type == TokenType.STRING) { return new NodeStringLiteral { value = t.value }; }
-            //if (t.type == TokenType.VARTYPE) { return new NodeVariableType { value = t.value }; }
             lexer.PutBack(t);
             return null;
         }
-
         public Node ParseConditional()
         {
             Token t;
@@ -394,7 +398,8 @@ namespace Compiler
                     return new NodeJumpStatement() { value = t.value };
             if (t.value == "return")
             {
-                //сделать после парсинга методов и функций
+                var expr = ParseExpression();
+                return new NodeJumpStatement() { value = t.value, expr = expr };                
             }
             lexer.PutBack(t);
             return null;
@@ -404,14 +409,50 @@ namespace Compiler
             Token t = lexer.GetNext();
             if (t.type == TokenType.VARTYPE)
             {
-                var e = ParseExpression();
-                if (DefineResType(e) == ResType.IDENTIFIER)
-                    return new NodeVariableDeclaration() { type = t.value, id = e };
+                var pv = ParseVariable();
+                if (pv is NodeList)
+                {
+                    NodeList variables = (NodeList)pv;
+                    if (variables == null) return new NodeError();
+                    variables.name = t.value;
+                    return new NodeVariableDeclaration() { type = t.value, variables = variables };
+                }
                 return new NodeError();
             }
             lexer.PutBack(t);
             return null;
         }
+
+        private Node ParseVariable()
+        {
+            Token t = lexer.GetNext();
+            if (t.value == ";") { lexer.PutBack(t); return null; }
+            lexer.PutBack(t);
+            List<Node> list = new List<Node>(); 
+            var current = ParseExpression();
+            if (DefineResType(current) == ResType.IDENTIFIER)
+                list.Add(current);
+            else return new NodeError();
+            if ((t = lexer.GetNext()).value == ",")
+            {
+                var pv = ParseVariable();
+                if (pv is NodeList)
+                {
+                    NodeList next = (NodeList)pv;
+                    if (next != null)
+                    {
+                        foreach (Node n in next.list)
+                            list.Add(n);
+                    }
+                    else return null;
+                }
+                else return new NodeError();
+            }
+            else lexer.PutBack(t);
+            if (list == null) return null;
+            return new NodeList() { list = list };
+        }
+
         public Node ParseNamespaceDeclaration()
         {
             Token t = lexer.GetNext();

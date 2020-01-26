@@ -26,21 +26,18 @@ namespace Compiler
         }
 
     }
-
     class NodeIdentifier : Node
     {
         public string name;
         public override string ToString(string indent, bool last) =>
             GetLogDecoration(indent, true).Prefix + string.Format(" NodeIdentifier {0}\n", name);
     }
-
     class NodeIntLiteral : Node
     {
         public int value;
         public override string ToString(string indent, bool last) =>
             GetLogDecoration(indent, true).Prefix + string.Format(" NodeIntValue {0}\n", value);
     }
-
     class NodeFloatLiteral : Node
     {
         public double value;
@@ -71,19 +68,16 @@ namespace Compiler
         public override string ToString(string indent, bool last) =>
            GetLogDecoration(indent, true).Prefix + string.Format(" NodeStringValue {0}\n", value);
     }
-
     class NodeVariableType : Node
     {
         public string value;
         public override string ToString(string indent, bool last) =>
            GetLogDecoration(indent, true).Prefix + string.Format(" NodeVariableType {0}\n", value);
     }
-
     public enum ResType
     {
         NUM, BOOL, LIST, ELEMENT, STRING, IDENTIFIER, ERROR
     }
-
     class NodeBinaryOp : Node
     {
         public string op;
@@ -99,7 +93,6 @@ namespace Compiler
             return res;
         }
     }
-
     class NodeUnaryOp : Node
     {
         public string op;
@@ -113,33 +106,6 @@ namespace Compiler
             return res;
         }
     }
-
-    class NodeLine : Node
-    {
-        public List<NodeUnit> units;
-        private string res;
-
-        public override string ToString(string indent, bool last)
-        {
-            foreach (NodeUnit u in units)
-                res += u.value + " ";
-            return GetLogDecoration(indent, true).Prefix + string.Format(" NodeLine {0}\n", res);
-        }
-    }
-
-    class NodeUnit : Node
-    {
-        public Token token { get; set; }
-        public String value;
-        public NodeUnit(Token token)
-        {
-            this.token = token;
-            value = token.value;
-        }
-        public override string ToString(string indent, bool last) =>
-           GetLogDecoration(indent, true).Prefix + string.Format(" Node {0}\n", value);
-    }
-
     class NodeCondSection : Node
     {
         public string op;
@@ -156,7 +122,6 @@ namespace Compiler
             return res;
         }
     }
-
     class NodeList : Node
     {
         public string name;
@@ -224,18 +189,25 @@ namespace Compiler
     class NodeJumpStatement : Node
     {
         public string value;
-        public override string ToString(string indent, bool last) =>
-           GetLogDecoration(indent, true).Prefix + string.Format(" NodeJumpValue {0}\n", value);
+        public Node expr;
+        public override string ToString(string indent, bool last)
+        {
+            var decoration = GetLogDecoration(indent, last);
+            var res = decoration.Prefix + string.Format(" NodeJumpValue {0}\n", value);
+            if (expr != null) res += expr.ToString(decoration.Indent, true);
+            return res;
+        }
     }
+
     class NodeVariableDeclaration : Node
     {
         public string type;
-        public Node id;
+        public NodeList variables;
         public override string ToString(string indent, bool last)
         {
             var decoration = GetLogDecoration(indent, last);
             var res = decoration.Prefix + string.Format(" VariableType {0}\n", type);
-            res += id.ToString(decoration.Indent, true);
+            res += variables.ToString(decoration.Indent, true);
             return res;
         }
     }
@@ -353,7 +325,8 @@ namespace Compiler
 
     class NodeError : Node
     {
+        public string message;
         public override string ToString(string indent, bool last) =>
-           GetLogDecoration(indent, true).Prefix + string.Format(" Error\n");
+           GetLogDecoration(indent, true).Prefix + string.Format(" Error {0}\n", message);
     }
 }
