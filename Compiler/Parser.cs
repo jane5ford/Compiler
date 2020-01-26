@@ -144,6 +144,21 @@ namespace Compiler
                     };
                 }
             }
+            if (t.value == "(")
+            {
+
+                if (left is NodeIdentifier)
+                {
+      
+                    var parameters = ParseInputParameterList();
+                    if ((lexer.GetNext().value == ")"))
+                    {
+
+                        return new NodeMethodExpression() { identifier = (NodeIdentifier)left, parameterList = (NodeList)parameters };
+                    }
+                }
+                return new NodeError();
+            }
             lexer.PutBack(t);
             return left;
         }
@@ -202,6 +217,7 @@ namespace Compiler
         private Node ParseFactor()
         {
             var t = lexer.GetNext();
+
             if (t.value == "(")
             {
                 var e = ParseExpression();
@@ -484,7 +500,7 @@ namespace Compiler
             {
                 if ((p = ParseConstructorDeclaration()) == null)
                 {
-                        return null;
+                    return null;
                 }
                 return p;
             }
@@ -587,6 +603,53 @@ namespace Compiler
             }
             lexer.PutBack(t);
             return null;
+        }
+        private Node ParseInputParameterList()
+        {
+            Token t;
+            List<Node> list = new List<Node>();
+            var current = ParseInputParameter();
+            if (current is NodeInputParameter)
+            {
+                list.Add(current);
+                if ((t = lexer.GetNext()).value == ",")
+                {
+                    NodeList next = (NodeList)ParseInputParameterList();
+                    if (next != null)
+                        foreach (Node n in next.list)
+                            list.Add(n);
+                    else if (current is NodeError) return new NodeError();
+                    return new NodeList() { name = "Parameters", list = list };
+                }
+                lexer.PutBack(t);
+                return new NodeList() { name = "Parameters", list = list };
+            }
+            if (current is NodeError) return new NodeError();
+            return null;
+        }
+        private Node ParseInputParameter()
+        {
+            Token t = lexer.GetNext();
+            string type = null;
+            Node parameter;
+            if (t.type == TokenType.VARTYPE)
+            {
+                type = t.value;
+            }
+            else lexer.PutBack(t);
+            var exp = ParseExpression();
+            if (exp == null || exp is NodeError)
+            {
+                if (type != null) lexer.PutBack(t);
+                return null;
+            }
+            parameter = exp;
+            if (type != null)
+            {
+                if (exp is NodeIdentifier) { }
+                else return new NodeError();
+            }
+            return new NodeInputParameter() { type = type, parameter = parameter };
         }
     }
 }

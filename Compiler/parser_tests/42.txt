@@ -1,0 +1,10 @@
+namespace Compiler
+{
+    public static class Node
+    {
+	public Node(int x, int y)
+	{
+	    Create();
+	}	
+    }
+}

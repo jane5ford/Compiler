@@ -321,6 +321,30 @@ namespace Compiler
             return res;
         }
     }
+    class NodeInputParameter : Node
+    {
+        public string type;
+        public Node parameter;
+        public override string ToString(string indent, bool last)
+        {
+            var decoration = GetLogDecoration(indent, last);
+            var res = decoration.Prefix + string.Format(" Type {0}\n", type);
+            res += parameter.ToString(decoration.Indent, true);
+            return res;
+        }
+    }
+    class NodeMethodExpression : Node
+    {
+        public NodeIdentifier identifier;
+        public NodeList parameterList;
+        public override string ToString(string indent, bool last)
+        {
+            var decoration = GetLogDecoration(indent, last);
+            var res = decoration.Prefix + string.Format(" Method {0}\n", identifier.name);
+            if (parameterList != null) res += parameterList.ToString(decoration.Indent, true);
+            return res;
+        }
+    }
     class NodeEmptyStatement : Node
     {
         public override string ToString(string indent, bool last) =>
