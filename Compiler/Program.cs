@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Data;
 using System.IO;
-using System.Text.Json;
 
 namespace Compiler
 {
@@ -12,8 +8,8 @@ namespace Compiler
 
         static void Main(string[] args)
         {
-            TestLexer();
-            //TestParser();
+            //TestLexer();
+            TestParser();
         }
 
         static void TestLexer()
@@ -30,9 +26,8 @@ namespace Compiler
                 {
                     Token token = lexer.GetNext();
                     if (token.type == TokenType.END_OF_FILE) break;
-                    //string res = token.row.ToString() + "\t" + token.col.ToString() + "\t" + token.type.ToString() + "\t" + token.value;
                     string res = token.ToString();
-                    if (i == 17) Console.WriteLine(res);
+                    //if (i == 7) Console.WriteLine(res);
                     if (res == result.ReadLine()) { isCorrect = true; }
                     else { isCorrect = false; break; }
                 }
@@ -41,7 +36,7 @@ namespace Compiler
         }
         static void TestParser()
         {
-            for(int i = 1; i < 47; i++)
+            for(int i = 1; i < 48; i++)
             {
                 StreamReader test2 = File.OpenText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                    @"C:\Users\ellia\source\repos\Compiler\Compiler\parser_tests\" + i + ".txt"));
@@ -54,7 +49,7 @@ namespace Compiler
                     Console.WriteLine("Test {0} is error", i);
                 else Console.WriteLine("Test {0} works", i);
                 //else 
-                //if (i == 46) Console.WriteLine("Test {0}: \n{1}", i, node);
+                //if (i == 47) Console.WriteLine("Test {0}: \n{1}", i, node);
                 
                 //while (true)
                 //{

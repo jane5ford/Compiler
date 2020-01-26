@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace Compiler
 {
@@ -25,6 +23,10 @@ namespace Compiler
             };
         }
 
+    }
+    public enum ResType
+    {
+        NUM, BOOL, LIST, ELEMENT, STRING, IDENTIFIER, ERROR
     }
     class NodeIdentifier : Node
     {
@@ -73,10 +75,6 @@ namespace Compiler
         public string value;
         public override string ToString(string indent, bool last) =>
            GetLogDecoration(indent, true).Prefix + string.Format(" NodeVariableType {0}\n", value);
-    }
-    public enum ResType
-    {
-        NUM, BOOL, LIST, ELEMENT, STRING, IDENTIFIER, ERROR
     }
     class NodeBinaryOp : Node
     {
@@ -322,7 +320,6 @@ namespace Compiler
         public override string ToString(string indent, bool last) =>
             GetLogDecoration(indent, true).Prefix + string.Format(" EmptyStatement\n");
     }
-
     class NodeError : Node
     {
         public string message;

@@ -1,2 +1,2 @@
 int a
-float b = 14.5f
+float b = 14.5

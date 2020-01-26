@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Data;
 using System.IO;
-using System.Text.Json;
 
 namespace Compiler
 {
@@ -16,8 +12,6 @@ namespace Compiler
         StreamReader sr;
         string currentLine;
         char ch;
-        public bool hasValue = false;
-        public bool hasSep = false;
         public Lexer(StreamReader sr)
         {
             Dictionary dictionary = new Dictionary();
@@ -45,25 +39,20 @@ namespace Compiler
             TokenType t;
             if (oldToken != null)
             {
-                Token to = oldToken;
+                Token old = oldToken;
                 oldToken = null;
-                return to;
+                return old;
             }
             ch = GetChar();
-            while ((ch == ' ') || ch == '\t')
-            {
+            while ((ch == ' ') || ch == '\t') 
                 ch = GetChar();
-            }
-            if (ch == '\0')
-            {
+            if (ch == '\0') 
                 return new Token(TokenType.END_OF_FILE);
-            }
             int pos = col;
             int str = row;
-            string value = "";
+            string value = ch.ToString();
             if (char.IsLetter(ch))
             {
-                value += ch;
                 while (char.IsLetterOrDigit(ch = GetChar()))
                     value += ch;
                 if (dictionary.keyWord.Contains(value))
@@ -72,48 +61,36 @@ namespace Compiler
                     else t = TokenType.KEYWORD;
                 }
                 else if (dictionary.varType.Contains(value))
-                {
                     t = TokenType.VARTYPE;
-                }
                 else t = TokenType.IDENTIFIER;
-                if (ch != ' ' && ch != '\t') col--;
+                PutChar();
                 return new Token(pos, str, t, value);
             }
             if (char.IsDigit(ch))
             {
-                value += ch;
                 while (char.IsDigit(ch = GetChar()))
                     value += ch;
                 if (ch == '.')
                 {
                     value += ch;
-                    int k = 0;
+                    int dec = 0;
                     while (char.IsDigit(ch = GetChar()))
-                    { value += ch; k++; }
-                    if (ch != ' ' && ch != '\t') col--;
-                    if (k > 7) t = TokenType.DOUBLE;
-                    else if (k == 0) t = TokenType.ERROR;
+                    { 
+                        value += ch; 
+                        dec++; 
+                    }
+                    if (dec > 7) t = TokenType.DOUBLE;
+                    else if (dec == 0) t = TokenType.ERROR;
                     else t = TokenType.FLOAT;
                 }
-                else if (char.IsLetter(ch))
-                {
-                    value += ch;
-                    t = TokenType.ERROR;
-                }
-                else
-                {
-                    t = TokenType.INT;
-                    if (ch != ' ' && ch != '\t') col--;
-                }
+                else t = TokenType.INT;
+                PutChar();
                 return new Token(pos, str, t, value);
             }
             if (ch == '"')
             {
-                value += ch;
                 while ((ch = GetChar()) != '"')
-                {
                     value += ch;
-                }
                 if (ch == '"')
                 {
                     value += ch;
@@ -121,100 +98,44 @@ namespace Compiler
                 }
                 else
                 {
-                    if (ch != ' ' && ch != '\t') col--;
+                    PutChar();
                     t = TokenType.ERROR;
                 }
                 return new Token(pos, str, t, value);
             }
             if (ch == '\'')
             {
-                value += ch;
                 value += GetChar();
                 if ((ch = GetChar()) == '\'')
                 {
                     value += ch;
                     t = TokenType.CHAR;
                 }
-                else { if (ch != ' ' && ch != '\t') col--; t = TokenType.ERROR; }
+                else { PutChar(); t = TokenType.ERROR; }
                 return new Token(pos, str, t, value);
             }
             else
             {
-                value += ch;
-                if (dictionary.parentheses.Contains(ch)) t = TokenType.PARETHESES;
-                else if (dictionary.punctuation.Contains(ch)) t = TokenType.PUNCTUATION;
-                else if (dictionary.arithmeticOperator.Contains(ch))
+                value += GetChar();
+                if (dictionary.assignmentOperator.Contains(value)) t = TokenType.ASSIGNMENT_OPERATOR;
+                else if (dictionary.comparisingOperator.Contains(value)) t = TokenType.COMPARISING_OPERATOR;
+                else if (dictionary.logicOperator.Contains(value)) t = TokenType.LOGIC_OPERATOR;
+                else
                 {
-                    if (ch == '=')
+                    if (value.Length == 2)
                     {
-                        if ((ch = GetChar()) == '=')
-                        {
-                            t = TokenType.COMPARISING_OPERATOR;
-                            value += ch;
-                        }
-                        else
-                        {
-                            if (ch != ' ' && ch != '\t') col--;
-                            t = TokenType.ASSIGNMENT_OPERATOR;
-                        }
-
+                        ch = value[1];
+                        value = value[0].ToString();
+                        PutChar();
                     }
-                    else
-                    {
-                        if ((ch = GetChar()) == '=') 
-                        { 
-                            value += ch; 
-                            t = TokenType.ASSIGNMENT_OPERATOR; 
-                        }
-                        else if (ch == '+' || ch == '-')
-                        {
-                            if (ch != ' ' && ch != '\t') col--;
-                            if (value[0] == (ch = GetChar()))
-                            {
-                                t = TokenType.ASSIGNMENT_OPERATOR;
-                                value += ch;
-                            }
-                            else
-                            {
-                                t = TokenType.ARITHMETIC_OPERATOR;
-                                if (ch != ' ' && ch != '\t') col--;
-                            }
-                        }
-                        else
-                        {
-                            if (ch != ' ' && ch != '\t') col--;
-                            t = TokenType.ARITHMETIC_OPERATOR;
-                        }
-                    }
+                    if (dictionary.assignmentOperator.Contains(value)) t = TokenType.ASSIGNMENT_OPERATOR;
+                    else if (dictionary.comparisingOperator.Contains(value)) t = TokenType.COMPARISING_OPERATOR;
+                    else if (dictionary.logicOperator.Contains(value)) t = TokenType.LOGIC_OPERATOR;
+                    else if (dictionary.arithmeticOperator.Contains(value)) t = TokenType.ARITHMETIC_OPERATOR;
+                    else if (dictionary.parentheses.Contains(value)) t = TokenType.PARETHESES;
+                    else if (dictionary.punctuation.Contains(value)) t = TokenType.PUNCTUATION;
+                    else t = TokenType.ERROR;
                 }
-                else if (ch == '<' || ch == '>' || ch == '!')
-                {
-                    if ((ch = GetChar()) == '=')
-                    {
-                        value += ch;
-                        if (value[0] == '!' && ch != '=') t = TokenType.LOGIC_OPERATOR;
-                        else t = TokenType.COMPARISING_OPERATOR;
-                    }
-                    else
-                    {
-                        if (ch != ' ' && ch != '\t') col--;
-                        t = TokenType.COMPARISING_OPERATOR;
-                    }
-                }
-                else if (ch == '&' || ch == '|')
-                {
-                    if ((ch = GetChar()) == value[0])
-                    {
-                        t = TokenType.LOGIC_OPERATOR;
-                        value += ch;
-                    }
-                    else
-                    {
-                        if (ch != ' ' && ch != '\t') col--;
-                        t = TokenType.ERROR;
-                    }
-                }
-                else { if (ch != ' ' && ch != '\t') col--; t = TokenType.ERROR; }
                 return new Token(pos, str, t, value);
             }
         }
@@ -222,6 +143,10 @@ namespace Compiler
         {
             if (oldToken != null) throw new NotImplementedException();
             oldToken = token;
+        }
+        private void PutChar()
+        {
+            if (ch != ' ' && ch != '\t') col--;
         }
     }
 }

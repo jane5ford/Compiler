@@ -8,36 +8,36 @@ namespace Compiler
     {
         public HashSet<string> keyWord;
         public HashSet<string> varType;
-        public HashSet<char> arithmeticOperator;
+        public HashSet<string> arithmeticOperator;
         public HashSet<string> assignmentOperator;
         public HashSet<string> comparisingOperator;
         public HashSet<string> logicOperator;
-        public HashSet<char> parentheses;
-        public HashSet<char> punctuation;
+        public HashSet<string> parentheses;
+        public HashSet<string> punctuation;
         public void Create()
         {
             keyWord = new HashSet<string>
             {
-                "bool",                 "break",                "false",                "case",
+                "break",                "false",                "case",
                 "class",                "const",                                        "else",
-                "float",                "for",                  "if",                  
+                "for",                  "if",
                 "namespace",            "new",                  "null",                 "private",
                 "protected",            "public",               "return",               "static",
-                                        "switch",               "this",                 "true",
+                "switch",               "this",                 "true",
                 "using",                "void",                 "while",                "write",
                 "read",                 
             };
             varType = new HashSet<string>
             {
                 "bool",                 "char",                 "double",               "float", 
-                "int",                  "string",               "var"
+                "int",                  "string",               "var",                  "byte"
             };
-            arithmeticOperator = new HashSet<char>
+            arithmeticOperator = new HashSet<string>
             {
-                '=',                '+',                '-',
-                '*',                '/',                '%'
+                "=",                "+",                "-",
+                "*",                "/",                "%"
             };
-            /*assignmentOperator = new HashSet<String>
+            assignmentOperator = new HashSet<String>
             {
                 "=",                "+=",                "-=",                "*=",
                 "/=",               "--",                "++" 
@@ -50,16 +50,15 @@ namespace Compiler
             logicOperator = new HashSet<String>
             {
                 "!",                "&&",                "||"
-            };*/
-            parentheses = new HashSet<char>
-            {
-                '[',                ']',                '(',
-                ')',                '{',                 '}'
             };
-            punctuation = new HashSet<char>
+            parentheses = new HashSet<string>
             {
-                '.',                ';',                ',',               ':'             
-                
+                "[",                "]",                "(",
+                ")",                "{",                 "}"
+            };
+            punctuation = new HashSet<string>
+            {
+                ".",                ";",                ",",               ":"             
             };
         }
     }

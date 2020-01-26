@@ -11,7 +11,6 @@ namespace Compiler
         {
             this.lexer = lexer;
         }
-
         private ResType DefineResType(Node operand)
         {
             if (operand is NodeBinaryOp)
@@ -29,10 +28,8 @@ namespace Compiler
             if (operand is NodeIdentifier) return ResType.IDENTIFIER;
             return ResType.ERROR;
         }
-
         public Node ParseBlock()
         {
-
             Token t = lexer.GetNext();
             if (t.value == "{")
             {
@@ -71,23 +68,21 @@ namespace Compiler
         {
             Node p;
             Token t;
-            if ((p = ParseExpression()) == null)
-                if ((p = ParseJumpStatement()) == null)
-                    if ((p = ParseVariableDeclaration()) == null)
-                    {
-                        if ((p = ParseConditional()) == null || p is NodeError)
+            if ((p = ParsePrint()) == null)
+                if ((p = ParseExpression()) == null)
+                    if ((p = ParseJumpStatement()) == null)
+                        if ((p = ParseVariableDeclaration()) == null)
                         {
-                            if ((p = ParseIterationStatement()) is NodeError)
-                            {
-                                t = lexer.GetNext();
-                                if (t.type == TokenType.PUNCTUATION) return new NodeEmptyStatement();
-                                lexer.PutBack(t);
-                                return new NodeError();
-                            }
+                            if ((p = ParseConditional()) == null || p is NodeError)
+                                if ((p = ParseIterationStatement()) is NodeError)
+                                {
+                                    t = lexer.GetNext();
+                                    if (t.type == TokenType.PUNCTUATION) return new NodeEmptyStatement();
+                                    lexer.PutBack(t);
+                                    return new NodeError();
+                                }
                             return p;
                         }
-                        return p;
-                    }
             t = lexer.GetNext();
             if (t.type == TokenType.PUNCTUATION)
                 return p;
@@ -221,7 +216,7 @@ namespace Compiler
                     op = t.value,
                     resType = ResType.IDENTIFIER
                 };
-                return new NodeError { message = "there is now constructor" };
+                return new NodeError { message = "there is no constructor" };
             }
             if (t.value == "(")
             {
@@ -440,10 +435,8 @@ namespace Compiler
                 {
                     NodeList next = (NodeList)pv;
                     if (next != null)
-                    {
                         foreach (Node n in next.list)
                             list.Add(n);
-                    }
                     else return null;
                 }
                 else return new NodeError();
@@ -539,9 +532,7 @@ namespace Compiler
             if ((p = ParseVariableDeclaration()) == null)
             {
                 if ((p = ParseConstructorDeclaration()) == null)
-                {
                     return null;
-                }
                 return p;
             }
             Token t = lexer.GetNext();
@@ -691,5 +682,41 @@ namespace Compiler
             }
             return new NodeInputParameter() { type = type, parameter = parameter };
         }
+        private Node ParsePrint()
+        {
+            Token t = lexer.GetNext();
+            if (t.value == "print")
+                if ((t = lexer.GetNext()).value == "(")
+                {
+                    NodeList p = (NodeList)ParsePrintParameters();
+                    if ((t = lexer.GetNext()).value == ")" && p != null)
+                        return new NodeList { name = "print", list = p.list };
+                    return new NodeError();
+                }
+            lexer.PutBack(t);
+            return null;
+        }
+        private Node ParsePrintParameters()
+        {
+            List<Node> list = new List<Node>();
+            var exp = ParseExpression();
+            if (exp == null) return null;
+            list.Add(exp);
+            Token t = lexer.GetNext();
+            if (t.value == ",")
+            {
+                var p = ParsePrintParameters();
+                if (p is NodeList)
+                {
+                    NodeList next = (NodeList)p;
+                    foreach (Node n in next.list)
+                        list.Add(n);
+                }
+                else return new NodeError();
+            }
+            else lexer.PutBack(t);
+            return new NodeList { list = list };
+        }
+        
     }
 }
