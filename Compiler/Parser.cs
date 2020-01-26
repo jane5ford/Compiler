@@ -99,7 +99,7 @@ namespace Compiler
         {
             var defleft = DefineResType(left);
             var defright = DefineResType(right);
-            if ((defleft == opType || defleft == ResType.IDENTIFIER) && (defright == opType || defright == ResType.IDENTIFIER))
+            if ((defleft == opType || defleft == ResType.IDENTIFIER) && (defright == opType || defright == ResType.IDENTIFIER || right is NodeMethodExpression))
                 return new NodeBinaryOp
                 {
                     left = left,
@@ -144,21 +144,7 @@ namespace Compiler
                     };
                 }
             }
-            if (t.value == "(")
-            {
-
-                if (left is NodeIdentifier)
-                {
-      
-                    var parameters = ParseInputParameterList();
-                    if ((lexer.GetNext().value == ")"))
-                    {
-
-                        return new NodeMethodExpression() { identifier = (NodeIdentifier)left, parameterList = (NodeList)parameters };
-                    }
-                }
-                return new NodeError();
-            }
+            
             lexer.PutBack(t);
             return left;
         }
@@ -175,6 +161,19 @@ namespace Compiler
             {
                 var right = ParseTerm();
                 return GetBinaryOp(left, right, t.value, ResType.NUM, ResType.NUM);
+            }
+            if (t.value == "(")
+            {
+                if (left is NodeIdentifier)
+                {
+
+                    var parameters = ParseInputParameterList();
+                    if ((lexer.GetNext().value == ")"))
+                    {
+                        return new NodeMethodExpression() { identifier = (NodeIdentifier)left, parameterList = (NodeList)parameters };
+                    }
+                }
+                return new NodeError();
             }
             lexer.PutBack(t);
             return left;

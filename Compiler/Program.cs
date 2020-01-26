@@ -41,7 +41,7 @@ namespace Compiler
         }
         static void TestParser()
         {
-            for(int i = 43; i < 44; i++)
+            for(int i = 1; i < 45; i++)
             {
                 StreamReader test2 = File.OpenText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                    @"C:\Users\ellia\source\repos\Compiler\Compiler\parser_tests\" + i + ".txt"));
@@ -49,11 +49,11 @@ namespace Compiler
                 Parser parser = new Parser(lexer2);
                 Node node = new NodeError();
                 if (i < 34) node = parser.ParseBlock();
-                if (i > 33 && i < 44) node = parser.ParseNamespaceDeclaration();
+                if (i > 33) node = parser.ParseNamespaceDeclaration();
                 if (node is NodeError)
                     Console.WriteLine("Test {0} is error", i);
-                //else Console.WriteLine("Test {0} works", i);
-                else Console.WriteLine("Test {0}: \n{1}", i, node);
+                else Console.WriteLine("Test {0} works", i);
+                //else Console.WriteLine("Test {0}: \n{1}", i, node);
                 
                 //while (true)
                 //{
