@@ -11,23 +11,6 @@ namespace Compiler
         {
             this.lexer = lexer;
         }
-        private ResType DefineResType(Node operand)
-        {
-            if (operand is NodeBinaryOp)
-            {
-                NodeBinaryOp o = (NodeBinaryOp)operand;
-                return o.resType;
-            }
-            if (operand is NodeUnaryOp)
-            {
-                NodeUnaryOp o = (NodeUnaryOp)operand;
-                return o.resType;
-            }
-            if (operand is NodeBoolLiteral) return ResType.BOOL;
-            if (operand is NodeIntLiteral || operand is NodeFloatLiteral || operand is NodeDoubleLiteral) return ResType.NUM;
-            if (operand is NodeIdentifier) return ResType.IDENTIFIER;
-            return ResType.ERROR;
-        }
         public Node ParseBlock()
         {
             Token t = lexer.GetNext();
@@ -238,9 +221,9 @@ namespace Compiler
                 return new NodeError();
             }
             if (t.type == TokenType.IDENTIFIER) { return new NodeIdentifier { name = t.value }; }
-            if (t.type == TokenType.INT) { return new NodeIntLiteral { value = int.Parse(t.value) }; }
-            if (t.type == TokenType.FLOAT) { return new NodeFloatLiteral { value = Convert.ToDouble(t.value) }; }
-            if (t.type == TokenType.DOUBLE) { return new NodeDoubleLiteral { value = Convert.ToDouble(t.value) }; }
+            if (t.type == TokenType.INT) { return new NodeIntLiteral { value = int.Parse(t.value) }; } 
+            if (t.type == TokenType.FLOAT) { return new NodeFloatLiteral { value = float.Parse(t.value) }; }
+            //if (t.type == TokenType.DOUBLE) { return new NodeDoubleLiteral { value = Convert.ToDouble(t.value) }; }
             if (t.type == TokenType.BOOLEAN) { return new NodeBoolLiteral { value = Convert.ToBoolean(t.value) }; }
             if (t.type == TokenType.CHAR) { return new NodeCharLiteral { value = t.value[0] }; }
             if (t.type == TokenType.STRING) { return new NodeStringLiteral { value = t.value }; }
@@ -717,6 +700,22 @@ namespace Compiler
             else lexer.PutBack(t);
             return new NodeList { list = list };
         }
-        
+        private ResType DefineResType(Node operand)
+        {
+            if (operand is NodeBinaryOp)
+            {
+                NodeBinaryOp o = (NodeBinaryOp)operand;
+                return o.resType;
+            }
+            if (operand is NodeUnaryOp)
+            {
+                NodeUnaryOp o = (NodeUnaryOp)operand;
+                return o.resType;
+            }
+            if (operand is NodeBoolLiteral) return ResType.BOOL;
+            if (operand is NodeIntLiteral || operand is NodeFloatLiteral || operand is NodeDoubleLiteral) return ResType.NUM;
+            if (operand is NodeIdentifier) return ResType.IDENTIFIER;
+            return ResType.ERROR;
+        }
     }
 }

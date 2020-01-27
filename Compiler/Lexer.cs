@@ -36,7 +36,7 @@ namespace Compiler
         }
         public Token GetNext() //проверить комментарии
         {
-            TokenType t;
+            TokenType t = TokenType.ERROR;
             if (oldToken != null)
             {
                 Token old = oldToken;
@@ -73,18 +73,39 @@ namespace Compiler
                 if (ch == '.')
                 {
                     value += ch;
-                    int dec = 0;
                     while (char.IsDigit(ch = GetChar()))
-                    { 
-                        value += ch; 
-                        dec++; 
+                    {
+                        t = TokenType.FLOAT;
+                        value += ch;
                     }
-                    if (dec > 7) t = TokenType.DOUBLE;
-                    else if (dec == 0) t = TokenType.ERROR;
-                    else t = TokenType.FLOAT;
+                    PutChar();
                 }
-                else t = TokenType.INT;
-                PutChar();
+                //if (ch == 'f' || ch == 'F')
+                //{
+                //    value += ch;
+                //    t = TokenType.FLOAT;
+                //}
+                else {
+                    PutChar();
+                    //if (t == TokenType.FLOAT) 
+                        t = TokenType.INT; 
+                }
+                if (t == TokenType.FLOAT)
+                {
+                    if ((ch = GetChar())== 'e')
+                    {
+                        value += ch;
+                        while (char.IsDigit(ch = GetChar()))
+                            value += ch;
+                        if (ch == '-' || ch == '+')
+                        {
+                            value += ch;
+                            while (char.IsDigit(ch = GetChar()))
+                                value += ch;
+                        }
+                    }
+                    PutChar();
+                }
                 return new Token(pos, str, t, value);
             }
             if (ch == '"')
@@ -122,12 +143,9 @@ namespace Compiler
                 else if (dictionary.logicOperator.Contains(value)) t = TokenType.LOGIC_OPERATOR;
                 else
                 {
-                    if (value.Length == 2)
-                    {
                         ch = value[1];
                         value = value[0].ToString();
                         PutChar();
-                    }
                     if (dictionary.assignmentOperator.Contains(value)) t = TokenType.ASSIGNMENT_OPERATOR;
                     else if (dictionary.comparisingOperator.Contains(value)) t = TokenType.COMPARISING_OPERATOR;
                     else if (dictionary.logicOperator.Contains(value)) t = TokenType.LOGIC_OPERATOR;

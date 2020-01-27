@@ -1,0 +1,4 @@
+0	0	STRING	"\"
+0	3	IDENTIFIER	a
+0	4	ERROR	\
+0	5	STRING	""
