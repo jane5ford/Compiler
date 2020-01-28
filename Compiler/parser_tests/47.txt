@@ -2,8 +2,11 @@ namespace Compiler
 {
     public static class Node
     {
+	int a, b;
+	string str;
 	public Node(int x, int y)
 	{
+	    a = b;
 	    print(y,x);
 	}	
     }

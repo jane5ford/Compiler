@@ -26,13 +26,19 @@ namespace Compiler
     }
     public enum ResType
     {
-        NUM, BOOL, LIST, ELEMENT, STRING, IDENTIFIER, ERROR
+        NUM, BOOL, LIST, ELEMENT, STRING, CHAR, IDENTIFIER, ERROR
     }
     class NodeIdentifier : Node
     {
         public string name;
-        public override string ToString(string indent, bool last) =>
-            GetLogDecoration(indent, true).Prefix + string.Format(" NodeIdentifier {0}\n", name);
+        public string type;
+        public override string ToString(string indent, bool last)
+        {
+            var decoration = GetLogDecoration(indent, last);
+            if (type == null)
+                return decoration.Prefix + string.Format("Variable {0} is not declarated\n", name);
+            return decoration.Prefix + string.Format(" NodeIdentifier {0} {1}\n", type, name);
+        }
     }
     class NodeIntLiteral : Node
     {
@@ -204,7 +210,7 @@ namespace Compiler
         public override string ToString(string indent, bool last)
         {
             var decoration = GetLogDecoration(indent, last);
-            var res = decoration.Prefix + string.Format(" VariableType {0}\n", type);
+            var res = decoration.Prefix + string.Format(" VariableDeclaration\n");
             res += variables.ToString(decoration.Indent, true);
             return res;
         }
@@ -281,13 +287,11 @@ namespace Compiler
     }
     class NodeParameter : Node
     {
-        public string type;
         public NodeIdentifier identifier;
         public override string ToString(string indent, bool last)
         {
             var decoration = GetLogDecoration(indent, last);
-            var res = decoration.Prefix + string.Format(" Type {0}\n", type);
-            res += identifier.ToString(decoration.Indent, true);
+            var res = identifier.ToString(decoration.Indent, true);
             return res;
         }
     }

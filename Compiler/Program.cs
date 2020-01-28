@@ -8,12 +8,12 @@ namespace Compiler
 
         static void Main(string[] args)
         {
-            TestLexer();
-            //TestParser();
+             //TestLexer();
+            TestParser();
         }
         static void TestLexer()
         {
-            int a = 44;
+            int a = 46;
             for (int i = 1; i <= a; i++)
             {
                 StreamReader test = File.OpenText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
@@ -27,7 +27,7 @@ namespace Compiler
                     Token token = lexer.GetNext();
                     if (token.type == TokenType.END_OF_FILE) { break; }//Console.WriteLine("Test {0} end\n", i)
                     string res = token.ToString();
-                    //Console.WriteLine(res);
+                    //if (i == 45) Console.WriteLine(res);
                     string myres = result.ReadLine();
                     if (res == myres) { isCorrect = true; }
                     else { Console.WriteLine(res); isCorrect = false; break; }
@@ -37,7 +37,7 @@ namespace Compiler
         }
         static void TestParser()
         {
-            for(int i = 1; i < 48; i++)
+            for(int i = 48; i < 49; i++)
             {
                 StreamReader test2 = File.OpenText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                    @"C:\Users\ellia\source\repos\Compiler\Compiler\parser_tests\" + i + ".txt"));

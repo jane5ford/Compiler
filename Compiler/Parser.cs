@@ -7,9 +7,11 @@ namespace Compiler
     class Parser
     {
         Lexer lexer;
+        Dictionary<string, NodeIdentifier> varDictionary;
         public Parser(Lexer lexer)
         {
             this.lexer = lexer;
+            varDictionary = new Dictionary<string, NodeIdentifier>();
         }
         public Node ParseBlock()
         {
@@ -56,7 +58,8 @@ namespace Compiler
                     if ((p = ParseJumpStatement()) == null)
                         if ((p = ParseVariableDeclaration()) == null)
                         {
-                            if ((p = ParseConditional()) == null || p is NodeError)
+                            if ((p = ParseConditional()) == null)
+                            {
                                 if ((p = ParseIterationStatement()) is NodeError)
                                 {
                                     t = lexer.GetNext();
@@ -64,6 +67,8 @@ namespace Compiler
                                     lexer.PutBack(t);
                                     return new NodeError();
                                 }
+                                
+                            }
                             return p;
                         }
             t = lexer.GetNext();
@@ -77,7 +82,8 @@ namespace Compiler
         {
             var defleft = DefineResType(left);
             var defright = DefineResType(right);
-            if ((defleft == opType || defleft == ResType.IDENTIFIER) && (defright == opType || defright == ResType.IDENTIFIER || right is NodeMethodExpression))
+            if ((defleft == opType) && 
+                (defright == opType || right is NodeMethodExpression))
                 return new NodeBinaryOp
                 {
                     left = left,
@@ -85,7 +91,7 @@ namespace Compiler
                     op = op,
                     resType = resType
                 };
-            return new NodeError();
+            return new NodeError() { message = "not all operands are " + opType.ToString()};
         }
         public Node ParseExpression()
         {
@@ -161,9 +167,7 @@ namespace Compiler
                 var right = ParseEqualityExpression();
                 var defleft = DefineResType(left);
                 var defright = DefineResType(right);
-                if (defleft == defright || (defleft == ResType.IDENTIFIER
-                    && defright != ResType.IDENTIFIER) || (defright == ResType.IDENTIFIER
-                    && defleft != ResType.IDENTIFIER))
+                if (defleft == defright)
                     return new NodeBinaryOp
                     {
                         left = left,
@@ -171,6 +175,7 @@ namespace Compiler
                         op = t.value,
                         resType = ResType.BOOL
                     };
+                return new NodeError() { message = "Identifiers have different types"};
             }
             lexer.PutBack(t);
             return left;
@@ -220,12 +225,16 @@ namespace Compiler
                     };
                 return new NodeError();
             }
-            if (t.type == TokenType.IDENTIFIER) { return new NodeIdentifier { name = t.value }; }
+            if (t.type == TokenType.IDENTIFIER) 
+            {
+                if (varDictionary.ContainsKey(t.value)) { varDictionary.TryGetValue(t.value, out NodeIdentifier identifier); return identifier; }
+                return new NodeIdentifier { name = t.value }; 
+            }
             if (t.type == TokenType.INT) { return new NodeIntLiteral { value = int.Parse(t.value) }; } 
             if (t.type == TokenType.FLOAT) { return new NodeFloatLiteral { value = float.Parse(t.value) }; }
             //if (t.type == TokenType.DOUBLE) { return new NodeDoubleLiteral { value = Convert.ToDouble(t.value) }; }
             if (t.type == TokenType.BOOLEAN) { return new NodeBoolLiteral { value = Convert.ToBoolean(t.value) }; }
-            if (t.type == TokenType.CHAR) { return new NodeCharLiteral { value = t.value[0] }; }
+            if (t.type == TokenType.CHAR) { return new NodeCharLiteral { value = t.value[1] }; }
             if (t.type == TokenType.STRING) { return new NodeStringLiteral { value = t.value }; }
             lexer.PutBack(t);
             return null;
@@ -240,26 +249,23 @@ namespace Compiler
                 if (lexer.GetNext().value == "(")
                 {
                     var exp = ParseExpression();
-                    if (DefineResType(exp) == ResType.BOOL)
+                    if (lexer.GetNext().value != ")") return new NodeError();
+                    Node s = ParseBlock();
+                    sections.Add(new NodeCondSection() { op = op, condition = exp, statement = s });
+                    NodeList pes = (NodeList)ParseElifSection();
+                    if (pes != null)
                     {
-                        if (lexer.GetNext().value != ")") return new NodeError();
-
-                        Node s = ParseBlock();
-
-                        sections.Add(new NodeCondSection() { op = op, condition = exp, statement = s });
-                        NodeList pes = (NodeList)ParseElifSection();
-                        if (pes != null)
-                        {
-                            List<Node> list = pes.list;
-                            foreach (Node p in list) { sections.Add(p); };
-                        }
+                        List<Node> list = pes.list;
+                        foreach (Node p in list) { sections.Add(p); };
+                    }
+                    //if (DefineResType(exp) == ResType.BOOL)
                         return new NodeList()
                         {
                             name = op,
                             list = sections
                         };
-                    }
-                    return new NodeError();
+                    
+                    //return new NodeError() { message = "Conditional is error" };
                 }
             }
             lexer.PutBack(t);
@@ -294,16 +300,14 @@ namespace Compiler
                 if (lexer.GetNext().value == "(")
                 {
                     var e = ParseExpression();
-                    if (DefineResType(e) == ResType.BOOL)
-                    {
                         if (lexer.GetNext().value != ")") return new NodeError();
                         var s = ParseBlock();
+                        //if (DefineResType(e) == ResType.BOOL)
                         return new NodeWhileStatement()
                         {
                             expression = e,
                             statement = s,
                         };
-                    }
                 }
                 return new NodeError();
             }
@@ -311,8 +315,41 @@ namespace Compiler
             {
                 if (lexer.GetNext().value == "(")
                 {
-                    var initializer = ParseExpression();
+                    t = lexer.GetNext();
+                    Node initializer;
+                    if (t.type == TokenType.VARTYPE)
+                    {
+                        var exp = ParseExpression();
+                        NodeIdentifier v;
+                        if (exp is NodeBinaryOp)
+                        {
+                            var op = (NodeBinaryOp)exp;
+                            if (op.left is NodeIdentifier)
+                            {
+                                v = (NodeIdentifier)op.left;
+                                v.type = t.value;
+                                varDictionary.Add(v.name, v);
+                            }
+                            else new NodeError() { message = "is not Identifier" };
+                        }
+                        if (exp is NodeIdentifier)
+                        {
+                            v = (NodeIdentifier)exp;
+                            v.type = t.value;
+                            try
+                            {
+                                varDictionary.Add(v.name, v);
+                            }
+                            catch
+                            {
+                                Console.WriteLine("ERROR: Identifier " + v.name + " is already declarated");
+                            }
+                        }
+                        initializer = exp;
+                    }
+                    else { lexer.PutBack(t); initializer = ParseExpression(); }
                     if (DefineResType(initializer) == ResType.IDENTIFIER)
+                    {
                         if (lexer.GetNext().value == ";")
                         {
                             var condition = ParseRelationalExpession();
@@ -322,6 +359,7 @@ namespace Compiler
                                 if (DefineResType(iterator) == ResType.IDENTIFIER && lexer.GetNext().value == ")")
                                 {
                                     var s = ParseBlock();
+                                    if (condition is NodeError) return new NodeError { message = "Identifier in condition is not num" };
                                     return new NodeForStatement()
                                     {
                                         initializer = initializer,
@@ -330,10 +368,10 @@ namespace Compiler
                                         statement = s,
                                     };
                                 }
-
                             }
+
                         }
-                }
+                    } }
                 return new NodeError();
             }
             if (t.value == "foreach")
@@ -387,12 +425,13 @@ namespace Compiler
             Token t = lexer.GetNext();
             if (t.type == TokenType.VARTYPE)
             {
-                var pv = ParseVariable();
+                var pv = ParseVariable(t.value);
                 if (pv is NodeList)
                 {
                     NodeList variables = (NodeList)pv;
                     if (variables == null) return new NodeError();
                     variables.name = t.value;
+                    //Console.WriteLine(varDictionary.Count);
                     return new NodeVariableDeclaration() { type = t.value, variables = variables };
                 }
                 return new NodeError();
@@ -401,7 +440,7 @@ namespace Compiler
             return null;
         }
 
-        private Node ParseVariable()
+        private Node ParseVariable(string type)
         {
             Token t = lexer.GetNext();
             if (t.value == ";") { lexer.PutBack(t); return null; }
@@ -409,11 +448,38 @@ namespace Compiler
             List<Node> list = new List<Node>(); 
             var current = ParseExpression();
             if (DefineResType(current) == ResType.IDENTIFIER)
+            {
+                NodeIdentifier v;
+                if (current is NodeBinaryOp)
+                {
+                    var op = (NodeBinaryOp)current;
+                    if (op.left is NodeIdentifier)
+                    { 
+                        v = (NodeIdentifier)op.left;
+                        v.type = type;
+                        varDictionary.Add(v.name, v);
+                    }
+                    else new NodeError() { message = "is not Identifier" };
+                }
+                if (current is NodeIdentifier)
+                {
+                    v = (NodeIdentifier)current;
+                    v.type = type;
+                    try
+                    {
+                        varDictionary.Add(v.name, v);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("ERROR: Identifier " + v.name + " is already declarated");
+                    }
+                }
                 list.Add(current);
+            }
             else return new NodeError();
             if ((t = lexer.GetNext()).value == ",")
             {
-                var pv = ParseVariable();
+                var pv = ParseVariable(type);
                 if (pv is NodeList)
                 {
                     NodeList next = (NodeList)pv;
@@ -469,9 +535,13 @@ namespace Compiler
             }
             if (t.value == "class")
             {
-                var identifier = ParseFactor();
-                if (identifier is NodeIdentifier)
-                    return new NodeClassDeclaration() { modifiers = modifiers, identifier = (NodeIdentifier)identifier, body = ParseClassBody() };
+                var f = ParseFactor();
+                if (f is NodeIdentifier)
+                {
+                    NodeIdentifier identifier = (NodeIdentifier)f;
+                    identifier.type = "class";
+                    return new NodeClassDeclaration() { modifiers = modifiers, identifier = identifier, body = ParseClassBody() };
+                }
             }
             if (modifiers.Count == 0) lexer.PutBack(t);
             return new NodeError();
@@ -498,7 +568,8 @@ namespace Compiler
                 list.Add(ParseClassMemberDeclaration());
                 var cmd = ParseClassMemberDeclarations();
                 if (cmd is null) { }
-                else
+                else if (cmd is NodeError) { return new NodeError(); }
+                else 
                 {
                     NodeList next = (NodeList)cmd;
                     foreach (Node n in next.list)
@@ -610,9 +681,22 @@ namespace Compiler
             Token t = lexer.GetNext();
             if (t.type == TokenType.VARTYPE)
             {
-                var identifier = ParseFactor();
-                if (identifier is NodeIdentifier)
-                    return new NodeParameter() { type = t.value, identifier = (NodeIdentifier)identifier };
+                var f = ParseFactor();
+                if (f is NodeIdentifier)
+                {
+                    NodeIdentifier identifier = (NodeIdentifier)f;
+                    identifier.type = t.value;
+                    try
+                    {
+                        varDictionary.Add(identifier.name, identifier);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("ERROR: Identifier " + identifier.name + " is already declarated");
+                        return new NodeParameter() { identifier = identifier };
+                    }
+                    return new NodeParameter() { identifier = identifier };
+                }
                 return new NodeError();
             }
             lexer.PutBack(t);
@@ -714,7 +798,17 @@ namespace Compiler
             }
             if (operand is NodeBoolLiteral) return ResType.BOOL;
             if (operand is NodeIntLiteral || operand is NodeFloatLiteral || operand is NodeDoubleLiteral) return ResType.NUM;
-            if (operand is NodeIdentifier) return ResType.IDENTIFIER;
+            if (operand is NodeStringLiteral) return ResType.STRING;
+            if (operand is NodeCharLiteral) return ResType.CHAR;
+            if (operand is NodeIdentifier)
+            {
+                NodeIdentifier ni = (NodeIdentifier)operand;
+                if (ni.type == "int" || ni.type == "float" || ni.type == "double") return ResType.NUM; 
+                if (ni.type == "bool") return ResType.BOOL; 
+                if (ni.type == "string") return ResType.STRING; 
+                if (ni.type == "char") return ResType.CHAR; 
+                return ResType.IDENTIFIER;
+            }
             return ResType.ERROR;
         }
     }

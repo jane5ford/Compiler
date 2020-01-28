@@ -4,6 +4,7 @@ namespace Compiler
     {
 	public Node(int x, int y)
 	{
+	    int a = b;
 	    return new Create(x,y);
 	}	
     }

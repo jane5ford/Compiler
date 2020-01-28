@@ -34,7 +34,7 @@ namespace Compiler
             row++;
             return ' ';
         }
-        public Token GetNext() //проверить комментарии
+        public Token GetNext()
         {
             TokenType t = TokenType.ERROR;
             if (oldToken != null)
@@ -46,6 +46,14 @@ namespace Compiler
             ch = GetChar();
             while ((ch == ' ') || ch == '\t') 
                 ch = GetChar();
+            if (ch == '/')
+            {
+                char n = GetChar();
+                if (n == '/')
+                    while (ch != ' ')
+                        ch = GetChar();
+                else PutChar();
+            }
             if (ch == '\0') 
                 return new Token(TokenType.END_OF_FILE);
             int pos = col;
@@ -80,15 +88,9 @@ namespace Compiler
                     }
                     PutChar();
                 }
-                //if (ch == 'f' || ch == 'F')
-                //{
-                //    value += ch;
-                //    t = TokenType.FLOAT;
-                //}
                 else {
                     PutChar();
-                    //if (t == TokenType.FLOAT) 
-                        t = TokenType.INT; 
+                    t = TokenType.INT; 
                 }
                 if (t == TokenType.FLOAT)
                 {
@@ -111,7 +113,14 @@ namespace Compiler
             if (ch == '"')
             {
                 while ((ch = GetChar()) != '"')
-                    value += ch;
+                {
+                    if (ch == '\\') 
+                    {
+                        value += ch;
+                        if ((ch = GetChar()) == '"') value += ch; 
+                    }
+                    else value += ch;
+                }
                 if (ch == '"')
                 {
                     value += ch;

@@ -1,0 +1,19 @@
+namespace Compiler
+{
+    public static class Student
+    {
+		int course;
+		int course;
+		float rate = 2.5; 
+		char gender;
+		public Student(string name)
+		{
+	    	bool approved;
+			if (name == "Ivan") rate = 5.0;
+			else if (gender == 'm') rate --;
+			
+			if (name == course) print(name);
+			while (rate > name) { naming = "Vanya"; rating++}
+		}
+    }
+}
